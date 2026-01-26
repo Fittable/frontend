@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,117 +28,143 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Work Scheduler</h1>
-        <p style={styles.subtitle}>Sign in to manage shifts</p>
+    <div className={styles.container}>
+      {/* Background decoration */}
+      <div className={styles.bgPattern} />
+      
+      <div className={styles.card}>
+        {/* Logo/Icon */}
+        <div className={styles.logoWrapper}>
+          <div className={styles.logo}>
+            <CalendarIcon />
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
-              required
-              autoFocus
-            />
+        <h1 className={styles.title}>Part-time Scheduler</h1>
+        <p className={styles.subtitle}>Sign in to manage your shifts</p>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label}>Username</label>
+            <div className={styles.inputWrapper}>
+              <UserIcon />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className={styles.input}
+                placeholder="Enter your username"
+                required
+                autoFocus
+                autoComplete="username"
+              />
+            </div>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
-              required
-            />
+          <div className={styles.field}>
+            <label className={styles.label}>Password</label>
+            <div className={styles.inputWrapper}>
+              <LockIcon />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={styles.input}
+                placeholder="Enter your password"
+                required
+                autoComplete="current-password"
+              />
+            </div>
           </div>
 
-          {error && <p style={styles.error}>{error}</p>}
+          {error && (
+            <div className={styles.error}>
+              <ErrorIcon />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+          <button type="submit" className={styles.button} disabled={loading}>
+            {loading ? (
+              <>
+                <LoadingSpinner />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <span>Sign In</span>
+            )}
           </button>
         </form>
 
-        <p style={styles.hint}>
-          Demo: admin/admin1234 or worker1/worker1234
-        </p>
+        <div className={styles.divider}>
+          <span>Demo credentials</span>
+        </div>
+
+        <div className={styles.hints}>
+          <div className={styles.hint}>
+            <span className={styles.hintRole}>Admin:</span>
+            <code>admin / admin1234</code>
+          </div>
+          <div className={styles.hint}>
+            <span className={styles.hintRole}>Worker:</span>
+            <code>worker1 / worker1234</code>
+          </div>
+        </div>
       </div>
+
+      {/* Footer */}
+      <footer className={styles.footer}>
+        <span>Part-time Work Scheduler</span>
+      </footer>
     </div>
   );
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#f5f5f5",
-  },
-  card: {
-    background: "white",
-    padding: "2rem",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    width: "100%",
-    maxWidth: "360px",
-  },
-  title: {
-    margin: "0 0 0.25rem 0",
-    fontSize: "1.5rem",
-    textAlign: "center",
-  },
-  subtitle: {
-    margin: "0 0 1.5rem 0",
-    color: "#666",
-    textAlign: "center",
-    fontSize: "0.875rem",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.25rem",
-  },
-  label: {
-    fontSize: "0.875rem",
-    fontWeight: 500,
-  },
-  input: {
-    padding: "0.5rem 0.75rem",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-    fontSize: "1rem",
-  },
-  button: {
-    padding: "0.75rem",
-    background: "#333",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    fontSize: "1rem",
-    cursor: "pointer",
-    marginTop: "0.5rem",
-  },
-  error: {
-    color: "#c00",
-    margin: 0,
-    fontSize: "0.875rem",
-  },
-  hint: {
-    marginTop: "1rem",
-    fontSize: "0.75rem",
-    color: "#999",
-    textAlign: "center",
-  },
-};
+function CalendarIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <rect x="7" y="14" width="3" height="3" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
 
+function UserIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function ErrorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <svg className={styles.spinner} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" opacity="0.25" />
+      <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+    </svg>
+  );
+}

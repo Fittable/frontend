@@ -1,0 +1,140 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+  padding: 0 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menuButton {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.menuButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewSelector {
+  position: relative;
+}
+
+.viewButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.viewButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.todayButton {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  transition: all var(--transition-fast);
+}
+
+.todayButton:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.navGroup {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.navButton {
+  width: 36px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.navButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.navButton:first-child {
+  border-right: 1px solid var(--border-default);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .menuButton {
+    display: flex;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .viewSelector {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .todayButton span {
+    display: none;
+  }
+
+  .todayButton::after {
+    content: "•";
+    font-size: 18px;
+  }
+}
+

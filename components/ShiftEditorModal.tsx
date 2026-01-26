@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Shift, User } from "@/lib/types";
+import styles from "./ShiftEditorModal.module.css";
 
 interface ShiftEditorModalProps {
   shift: Shift | null;
@@ -51,7 +52,6 @@ export default function ShiftEditorModal({
 
     try {
       if (shift) {
-        // Update existing
         await api.updateShift(shift.id, {
           start_time: startTime + ":00",
           end_time: endTime + ":00",
@@ -59,7 +59,6 @@ export default function ShiftEditorModal({
           user_id: isAdmin ? userId : undefined,
         });
       } else {
-        // Create new
         await api.createShift({
           date,
           start_time: startTime + ":00",
@@ -76,81 +75,116 @@ export default function ShiftEditorModal({
     }
   };
 
+  const formattedDate = date
+    ? new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
+
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.header}>
-          <h3 style={{ margin: 0 }}>{shift ? "Edit Shift" : "Add Shift"}</h3>
-          <button onClick={onClose} style={styles.closeBtn}>
-            ×
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>
+            {shift ? "Edit Shift" : "New Shift"}
+          </h2>
+          <button onClick={onClose} className={styles.closeButton} aria-label="Close">
+            <CloseIcon />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Date</label>
-            <input type="text" value={date} disabled style={styles.input} />
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Date display */}
+          <div className={styles.field}>
+            <label className={styles.label}>Date</label>
+            <div className={styles.dateDisplay}>
+              <CalendarIcon />
+              <span>{formattedDate}</span>
+            </div>
           </div>
 
+          {/* Worker select (admin only) */}
           {isAdmin && users.length > 0 && (
-            <div style={styles.field}>
-              <label style={styles.label}>Assign to</label>
+            <div className={styles.field}>
+              <label className={styles.label}>Assign to</label>
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                style={styles.input}
+                className={styles.select}
               >
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.username}
+                    {u.username} {u.role === "admin" ? "(admin)" : ""}
                   </option>
                 ))}
               </select>
             </div>
           )}
 
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>Start Time</label>
+          {/* Time inputs */}
+          <div className={styles.timeRow}>
+            <div className={styles.field}>
+              <label className={styles.label}>Start Time</label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                style={styles.input}
+                className={styles.input}
                 required
               />
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>End Time</label>
+            <div className={styles.timeSeparator}>
+              <ArrowIcon />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>End Time</label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                style={styles.input}
+                className={styles.input}
                 required
               />
             </div>
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Note (optional)</label>
-            <input
-              type="text"
+          {/* Note input */}
+          <div className={styles.field}>
+            <label className={styles.label}>Note (optional)</label>
+            <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              style={styles.input}
-              placeholder="Add a note..."
+              className={styles.textarea}
+              placeholder="Add a note about this shift..."
+              rows={3}
             />
           </div>
 
-          {error && <p style={styles.error}>{error}</p>}
+          {/* Error display */}
+          {error && (
+            <div className={styles.error}>
+              <ErrorIcon />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <div style={styles.actions}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>
+          {/* Action buttons */}
+          <div className={styles.actions}>
+            <button type="button" onClick={onClose} className={styles.cancelButton}>
               Cancel
             </button>
-            <button type="submit" style={styles.saveBtn} disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+            <button type="submit" className={styles.saveButton} disabled={loading}>
+              {loading ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>{shift ? "Update" : "Create"} Shift</span>
+              )}
             </button>
           </div>
         </form>
@@ -159,89 +193,50 @@ export default function ShiftEditorModal({
   );
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.5)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-  },
-  modal: {
-    background: "white",
-    borderRadius: "8px",
-    width: "100%",
-    maxWidth: "400px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "1rem",
-    borderBottom: "1px solid #eee",
-  },
-  closeBtn: {
-    border: "none",
-    background: "none",
-    fontSize: "1.5rem",
-    cursor: "pointer",
-    color: "#666",
-    padding: 0,
-    lineHeight: 1,
-  },
-  form: {
-    padding: "1rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.25rem",
-  },
-  row: {
-    display: "flex",
-    gap: "1rem",
-  },
-  label: {
-    fontSize: "0.875rem",
-    fontWeight: 500,
-  },
-  input: {
-    padding: "0.5rem",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-    fontSize: "1rem",
-  },
-  error: {
-    color: "#c00",
-    margin: 0,
-    fontSize: "0.875rem",
-  },
-  actions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
-  },
-  cancelBtn: {
-    padding: "0.5rem 1rem",
-    border: "1px solid #ddd",
-    background: "white",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  saveBtn: {
-    padding: "0.5rem 1rem",
-    border: "none",
-    background: "#333",
-    color: "white",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-};
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
 
+function CalendarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12,5 19,12 12,19" />
+    </svg>
+  );
+}
+
+function ErrorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <svg className={styles.spinner} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" opacity="0.25" />
+      <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+    </svg>
+  );
+}
