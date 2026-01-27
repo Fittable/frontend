@@ -20,10 +20,12 @@
   background: var(--bg-secondary);
   border-radius: 12px;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-subtle);
   animation: scaleIn 0.2s ease;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes scaleIn {
@@ -41,25 +43,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
 .closeButton {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  color: var(--text-secondary);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 1;
   transition: all var(--transition-fast);
 }
 
@@ -69,31 +73,39 @@
 }
 
 .form {
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .label {
   font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .input,
-.select,
-.textarea {
-  padding: 12px 14px;
+.select {
+  padding: 10px 12px;
   font-size: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .select {
@@ -101,19 +113,12 @@
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239b9b9b' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
-  padding-right: 36px;
-}
-
-.textarea {
-  resize: vertical;
-  min-height: 80px;
+  padding-right: 32px;
+  cursor: pointer;
 }
 
 .dateDisplay {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: 6px;
@@ -121,51 +126,140 @@
   font-size: 14px;
 }
 
-.dateDisplay svg {
+/* Toggle Row for Regular/Vacation */
+.toggleRow {
+  display: flex;
+  gap: 8px;
+}
+
+.toggleBtn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  transition: all var(--transition-fast);
+}
+
+.toggleBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.toggleActive {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* Shift Options */
+.shiftOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.shiftBtn {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.shiftBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.shiftActive {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
+
+.shiftName {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.shiftTime {
+  display: block;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
-.timeRow {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
+.shiftActive .shiftTime {
+  color: var(--accent);
 }
 
-.timeRow .field {
+/* Time Row */
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeRow .input {
   flex: 1;
+  text-align: center;
 }
 
 .timeSeparator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 12px;
   color: var(--text-muted);
+  font-size: 13px;
 }
 
-.error {
+/* Summary */
+.summary {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  border: 1px solid var(--border-default);
+}
+
+.summaryLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.summaryValue {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+/* Error */
+.error {
+  padding: 10px 12px;
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
+  border-radius: 6px;
   color: #f87171;
   font-size: 13px;
 }
 
+/* Actions */
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   margin-top: 4px;
 }
 
 .cancelButton {
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   background: var(--bg-card);
@@ -179,13 +273,9 @@
 }
 
 .saveButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   background: var(--accent);
   color: white;
@@ -200,25 +290,16 @@
   opacity: 0.7;
 }
 
-.spinner {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* Mobile styles */
 @media (max-width: 480px) {
   .modal {
     max-width: 100%;
-    border-radius: 16px 16px 0 0;
+    border-radius: 12px 12px 0 0;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    max-height: 85vh;
   }
 
   .overlay {
@@ -226,13 +307,7 @@
     padding: 0;
   }
 
-  .timeRow {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .timeSeparator {
-    display: none;
+  .shiftOptions {
+    grid-template-columns: 1fr;
   }
 }
-

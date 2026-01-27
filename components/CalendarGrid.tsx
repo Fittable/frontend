@@ -2,7 +2,6 @@
 
 import { Shift, User } from "@/lib/types";
 import { getWorkerColor } from "./Sidebar";
-import ShiftBar, { MoreShifts } from "./ShiftBar";
 import styles from "./CalendarGrid.module.css";
 
 interface CalendarGridProps {
@@ -16,7 +15,38 @@ interface CalendarGridProps {
   onDayDoubleClick: (dateStr: string) => void;
 }
 
-const MAX_VISIBLE_SHIFTS = 3;
+// Group shifts by user for a given day
+type UserShifts = {
+  userId: string;
+  username: string;
+  shifts: Shift[];
+};
+
+function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
+  const grouped = new Map<string, UserShifts>();
+  
+  shifts.forEach((shift) => {
+    const existing = grouped.get(shift.user_id);
+    if (existing) {
+      existing.shifts.push(shift);
+    } else {
+      grouped.set(shift.user_id, {
+        userId: shift.user_id,
+        username: shift.username || "Unknown",
+        shifts: [shift],
+      });
+    }
+  });
+
+  // Sort shifts within each user by start time
+  grouped.forEach((userShifts) => {
+    userShifts.shifts.sort((a, b) => a.start_time.localeCompare(b.start_time));
+  });
+
+  return Array.from(grouped.values());
+}
+
+const MAX_VISIBLE_USERS = 3;
 
 export default function CalendarGrid({
   currentDate,
@@ -119,6 +149,8 @@ export default function CalendarGrid({
   // Weekday headers (Monday start)
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  const formatTime = (time: string) => time.slice(0, 5);
+
   return (
     <div className={styles.container}>
       {/* Weekday headers */}
@@ -137,12 +169,13 @@ export default function CalendarGrid({
       <div className={styles.grid}>
         {days.map((dayInfo, idx) => {
           const dayShifts = shiftsByDate.get(dayInfo.dateStr) || [];
+          const groupedShifts = groupShiftsByUser(dayShifts);
           const isSelected = dayInfo.dateStr === selectedDate;
           const isToday = dayInfo.dateStr === todayStr;
           const isWeekend = idx % 7 >= 5;
 
-          const visibleShifts = dayShifts.slice(0, MAX_VISIBLE_SHIFTS);
-          const hiddenCount = dayShifts.length - MAX_VISIBLE_SHIFTS;
+          const visibleUsers = groupedShifts.slice(0, MAX_VISIBLE_USERS);
+          const hiddenCount = groupedShifts.length - MAX_VISIBLE_USERS;
 
           return (
             <div
@@ -162,29 +195,50 @@ export default function CalendarGrid({
               </div>
 
               <div className={styles.shiftsContainer}>
-                {visibleShifts.map((shift) => {
-                  const userIdx = userIndexMap.get(shift.user_id) ?? 0;
+                {visibleUsers.map((userShifts) => {
+                  const userIdx = userIndexMap.get(userShifts.userId) ?? 0;
                   const color = getWorkerColor(userIdx);
+                  
+                  // Combine times for display
+                  const timesDisplay = userShifts.shifts
+                    .map(s => `${formatTime(s.start_time)}–${formatTime(s.end_time)}`)
+                    .join(", ");
+
+                  const displayText = isAdmin 
+                    ? `${userShifts.username} · ${timesDisplay}` 
+                    : timesDisplay;
 
                   return (
-                    <ShiftBar
-                      key={shift.id}
-                      shift={shift}
-                      color={color}
-                      showWorkerName={isAdmin}
-                      onClick={() => {
-                        // Prevent event bubbling
-                        onShiftClick(shift);
+                    <button
+                      key={userShifts.userId}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShiftClick(userShifts.shifts[0]);
                       }}
-                    />
+                      className={styles.shiftBar}
+                      style={{ 
+                        backgroundColor: `${color}20`,
+                        borderLeftColor: color,
+                      }}
+                      title={`${userShifts.username}: ${timesDisplay}`}
+                    >
+                      <span className={styles.shiftText} style={{ color }}>
+                        {displayText}
+                      </span>
+                    </button>
                   );
                 })}
 
                 {hiddenCount > 0 && (
-                  <MoreShifts
-                    count={hiddenCount}
-                    onClick={() => onDayClick(dayInfo.dateStr)}
-                  />
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDayClick(dayInfo.dateStr);
+                    }} 
+                    className={styles.moreShifts}
+                  >
+                    +{hiddenCount} more
+                  </button>
                 )}
               </div>
             </div>
@@ -198,4 +252,3 @@ export default function CalendarGrid({
 function formatDateStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
-
