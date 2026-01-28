@@ -28,7 +28,6 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 1fr);
   flex: 1;
   min-height: 0;
 }
@@ -55,14 +54,6 @@
 
 .dayCell.selected {
   background: var(--bg-active);
-}
-
-.dayCell.otherMonth {
-  background: var(--bg-secondary);
-}
-
-.dayCell.otherMonth:hover {
-  background: var(--bg-hover);
 }
 
 .dayCell.weekend {
@@ -92,14 +83,35 @@
   border-radius: 50%;
 }
 
-.otherMonth .dayNumber {
-  color: var(--text-muted);
-}
-
 .dayNumber.today {
   background: var(--accent);
   color: white;
   font-weight: 600;
+}
+
+.monthIndicator {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.secondMonth {
+  background: var(--bg-secondary);
+}
+
+.secondMonth:hover {
+  background: var(--bg-hover);
+}
+
+.emptyCell {
+  background: var(--bg-primary);
+  cursor: default;
+}
+
+.emptyCell:hover {
+  background: var(--bg-primary);
 }
 
 .shiftsContainer {

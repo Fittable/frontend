@@ -1,6 +1,7 @@
 "use client";
 
 import { User } from "@/lib/types";
+import { WorkMonth } from "@/lib/workMonth";
 import MiniCalendar from "./MiniCalendar";
 import styles from "./Sidebar.module.css";
 
@@ -23,7 +24,7 @@ export function getWorkerColor(index: number): string {
 interface SidebarProps {
   user: User;
   users: User[];
-  currentDate: Date;
+  workMonth: WorkMonth;
   selectedDate: string | null;
   visibleWorkerIds: string[];
   onDateSelect: (date: Date) => void;
@@ -36,7 +37,7 @@ interface SidebarProps {
 export default function Sidebar({
   user,
   users,
-  currentDate,
+  workMonth,
   selectedDate,
   visibleWorkerIds,
   onDateSelect,
@@ -54,14 +55,11 @@ export default function Sidebar({
 
   const handleWorkerToggle = (userId: string) => {
     if (showAllSelected) {
-      // Switching from "all" to specific worker
       onWorkerFilterChange([userId]);
     } else if (visibleWorkerIds.includes(userId)) {
-      // Remove worker from filter
       const newIds = visibleWorkerIds.filter((id) => id !== userId);
       onWorkerFilterChange(newIds);
     } else {
-      // Add worker to filter
       onWorkerFilterChange([...visibleWorkerIds, userId]);
     }
   };
@@ -77,7 +75,7 @@ export default function Sidebar({
         {/* Mini Calendar */}
         <div className={styles.section}>
           <MiniCalendar
-            currentDate={currentDate}
+            workMonth={workMonth}
             selectedDate={selectedDate}
             onDateSelect={onDateSelect}
           />
@@ -105,7 +103,7 @@ export default function Sidebar({
               {workerList.map((w, index) => {
                 const color = getWorkerColor(index);
                 const isSelected = !showAllSelected && visibleWorkerIds.includes(w.id);
-                
+
                 return (
                   <label key={w.id} className={styles.filterItem}>
                     <input
@@ -159,4 +157,3 @@ function LogoutIcon() {
     </svg>
   );
 }
-

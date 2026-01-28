@@ -4,6 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { User, Shift } from "@/lib/types";
+import {
+  WorkMonth,
+  getWorkMonth,
+  getNextWorkMonth,
+  getPrevWorkMonth,
+  getMonthsToFetch,
+  formatDateStr,
+} from "@/lib/workMonth";
 import Sidebar from "@/components/Sidebar";
 import CalendarHeader from "@/components/CalendarHeader";
 import CalendarGrid from "@/components/CalendarGrid";
@@ -16,7 +24,7 @@ export default function CalendarPage() {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [visibleWorkerIds, setVisibleWorkerIds] = useState<string[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
@@ -24,23 +32,27 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const formatMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    return `${year}-${month}`;
-  };
-
   const loadShifts = useCallback(async () => {
     try {
-      const month = formatMonth(currentDate);
-      // If filtering by specific workers, we need to load all and filter client-side
-      // Or load for each worker - for simplicity, load all and filter
-      const data = await api.getShifts(month);
-      setShifts(data);
+      // Need to fetch shifts for both months in the work month range
+      const monthsToFetch = getMonthsToFetch(workMonth);
+      const allShifts: Shift[] = [];
+
+      for (const month of monthsToFetch) {
+        const data = await api.getShifts(month);
+        allShifts.push(...data);
+      }
+
+      // Remove duplicates (by id) in case of overlap
+      const uniqueShifts = Array.from(
+        new Map(allShifts.map((s) => [s.id, s])).values()
+      );
+
+      setShifts(uniqueShifts);
     } catch (err) {
       console.error("Failed to load shifts:", err);
     }
-  }, [currentDate]);
+  }, [workMonth]);
 
   useEffect(() => {
     const init = async () => {
@@ -52,7 +64,6 @@ export default function CalendarPage() {
           const userList = await api.getUsers();
           setUsers(userList);
         } else {
-          // For workers, just add themselves to the users list
           setUsers([me]);
         }
       } catch {
@@ -73,7 +84,6 @@ export default function CalendarPage() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -98,7 +108,7 @@ export default function CalendarPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [workMonth]);
 
   const handleLogout = async () => {
     await api.logout();
@@ -106,27 +116,23 @@ export default function CalendarPage() {
   };
 
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    setWorkMonth(getPrevWorkMonth(workMonth));
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    setWorkMonth(getNextWorkMonth(workMonth));
   };
 
   const handleToday = () => {
     const today = new Date();
-    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
-    // Format today's date and select it
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    setSelectedDate(todayStr);
+    setWorkMonth(getWorkMonth(today));
+    setSelectedDate(formatDateStr(today));
   };
 
   const handleDateSelect = (date: Date) => {
-    // Navigate to the month containing this date
-    setCurrentDate(new Date(date.getFullYear(), date.getMonth(), 1));
-    // Select the date
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    setSelectedDate(dateStr);
+    // Navigate to the work month containing this date
+    setWorkMonth(getWorkMonth(date));
+    setSelectedDate(formatDateStr(date));
   };
 
   const handleDayClick = (dateStr: string) => {
@@ -150,7 +156,6 @@ export default function CalendarPage() {
   };
 
   const handleShiftClick = (shift: Shift) => {
-    // Select the day and open edit modal
     setSelectedDate(shift.date);
     setEditingShift(shift);
     setShowModal(true);
@@ -201,7 +206,7 @@ export default function CalendarPage() {
       <Sidebar
         user={user}
         users={users}
-        currentDate={currentDate}
+        workMonth={workMonth}
         selectedDate={selectedDate}
         visibleWorkerIds={visibleWorkerIds}
         onDateSelect={handleDateSelect}
@@ -215,7 +220,7 @@ export default function CalendarPage() {
       <main className={styles.main}>
         {/* Header */}
         <CalendarHeader
-          currentDate={currentDate}
+          workMonth={workMonth}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
           onToday={handleToday}
@@ -227,7 +232,7 @@ export default function CalendarPage() {
           {/* Calendar Grid */}
           <div className={styles.calendarContainer}>
             <CalendarGrid
-              currentDate={currentDate}
+              workMonth={workMonth}
               shifts={filteredShifts}
               users={users}
               selectedDate={selectedDate}

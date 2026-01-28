@@ -1,85 +1,68 @@
 "use client";
 
 import { useState } from "react";
+import {
+  WorkMonth,
+  getWorkMonthStartDate,
+  getWorkMonthEndDate,
+  getWorkMonthLabel,
+  getNextWorkMonth,
+  getPrevWorkMonth,
+  formatDateStr,
+} from "@/lib/workMonth";
 import styles from "./MiniCalendar.module.css";
 
 interface MiniCalendarProps {
-  currentDate: Date;
+  workMonth: WorkMonth;
   selectedDate: string | null;
   onDateSelect: (date: Date) => void;
 }
 
 export default function MiniCalendar({
-  currentDate,
+  workMonth,
   selectedDate,
   onDateSelect,
 }: MiniCalendarProps) {
-  const [viewDate, setViewDate] = useState(
-    new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-  );
+  const [viewMonth, setViewMonth] = useState(workMonth);
 
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
+  // Get start and end dates for the view month
+  const startDate = getWorkMonthStartDate(viewMonth);
+  const endDate = getWorkMonthEndDate(viewMonth);
 
-  // Calculate calendar grid
-  const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const daysInMonth = lastDayOfMonth.getDate();
-  
-  // Start from Monday (1) instead of Sunday (0)
-  let startDay = firstDayOfMonth.getDay();
-  startDay = startDay === 0 ? 6 : startDay - 1; // Adjust for Monday start
-
-  // Previous month days to show
-  const prevMonthLastDay = new Date(year, month, 0).getDate();
-  const prevMonthDays: number[] = [];
-  for (let i = startDay - 1; i >= 0; i--) {
-    prevMonthDays.push(prevMonthLastDay - i);
+  // Build array of dates
+  const dates: Date[] = [];
+  const current = new Date(startDate);
+  while (current <= endDate) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
   }
 
-  // Current month days
-  const currentMonthDays: number[] = [];
-  for (let d = 1; d <= daysInMonth; d++) {
-    currentMonthDays.push(d);
-  }
+  // Calculate padding for Monday start
+  let startDayOfWeek = startDate.getDay();
+  startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+  const paddingBefore = startDayOfWeek;
 
-  // Next month days to fill remaining cells (ensure 6 rows)
-  const totalCells = 42; // 6 rows x 7 days
-  const nextMonthDaysCount = totalCells - prevMonthDays.length - currentMonthDays.length;
-  const nextMonthDays: number[] = [];
-  for (let d = 1; d <= nextMonthDaysCount; d++) {
-    nextMonthDays.push(d);
-  }
-
-  // Format date string for comparison
-  const formatDateStr = (y: number, m: number, d: number) => {
-    return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  };
+  const totalDays = dates.length + paddingBefore;
+  const totalWeeks = Math.ceil(totalDays / 7);
+  const totalCells = totalWeeks * 7;
+  const paddingAfter = totalCells - totalDays;
 
   const today = new Date();
-  const todayStr = formatDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayStr = formatDateStr(today);
 
-  // Navigation handlers
   const handlePrevMonth = () => {
-    setViewDate(new Date(year, month - 1, 1));
+    setViewMonth(getPrevWorkMonth(viewMonth));
   };
 
   const handleNextMonth = () => {
-    setViewDate(new Date(year, month + 1, 1));
+    setViewMonth(getNextWorkMonth(viewMonth));
   };
 
-  const handleDayClick = (day: number, monthOffset: number) => {
-    const newDate = new Date(year, month + monthOffset, day);
-    onDateSelect(newDate);
-    if (monthOffset !== 0) {
-      setViewDate(new Date(newDate.getFullYear(), newDate.getMonth(), 1));
-    }
+  const handleDayClick = (date: Date) => {
+    onDateSelect(date);
   };
 
-  const monthYearLabel = viewDate.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  const monthLabel = getWorkMonthLabel(viewMonth, true);
 
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -90,7 +73,7 @@ export default function MiniCalendar({
         <button onClick={handlePrevMonth} className={styles.navButton} aria-label="Previous month">
           <ChevronLeftIcon />
         </button>
-        <span className={styles.monthLabel}>{monthYearLabel}</span>
+        <span className={styles.monthLabel}>{monthLabel}</span>
         <button onClick={handleNextMonth} className={styles.navButton} aria-label="Next month">
           <ChevronRightIcon />
         </button>
@@ -107,64 +90,35 @@ export default function MiniCalendar({
 
       {/* Calendar grid */}
       <div className={styles.grid}>
-        {/* Previous month days */}
-        {prevMonthDays.map((day) => {
-          const dateStr = formatDateStr(
-            month === 0 ? year - 1 : year,
-            month === 0 ? 11 : month - 1,
-            day
-          );
-          return (
-            <button
-              key={`prev-${day}`}
-              onClick={() => handleDayClick(day, -1)}
-              className={`${styles.day} ${styles.otherMonth} ${
-                dateStr === selectedDate ? styles.selected : ""
-              }`}
-            >
-              {day}
-            </button>
-          );
-        })}
+        {/* Padding before */}
+        {Array.from({ length: paddingBefore }).map((_, idx) => (
+          <div key={`pad-${idx}`} className={styles.emptyDay} />
+        ))}
 
-        {/* Current month days */}
-        {currentMonthDays.map((day) => {
-          const dateStr = formatDateStr(year, month, day);
+        {/* Date cells */}
+        {dates.map((date) => {
+          const dateStr = formatDateStr(date);
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedDate;
+          const isFirstMonth = date.getMonth() === viewMonth.startMonth;
 
           return (
             <button
-              key={`curr-${day}`}
-              onClick={() => handleDayClick(day, 0)}
+              key={dateStr}
+              onClick={() => handleDayClick(date)}
               className={`${styles.day} ${isToday ? styles.today : ""} ${
                 isSelected ? styles.selected : ""
-              }`}
+              } ${!isFirstMonth ? styles.secondMonth : ""}`}
             >
-              {day}
+              {date.getDate()}
             </button>
           );
         })}
 
-        {/* Next month days */}
-        {nextMonthDays.map((day) => {
-          const dateStr = formatDateStr(
-            month === 11 ? year + 1 : year,
-            month === 11 ? 0 : month + 1,
-            day
-          );
-          return (
-            <button
-              key={`next-${day}`}
-              onClick={() => handleDayClick(day, 1)}
-              className={`${styles.day} ${styles.otherMonth} ${
-                dateStr === selectedDate ? styles.selected : ""
-              }`}
-            >
-              {day}
-            </button>
-          );
-        })}
+        {/* Padding after */}
+        {Array.from({ length: paddingAfter }).map((_, idx) => (
+          <div key={`pad-after-${idx}`} className={styles.emptyDay} />
+        ))}
       </div>
     </div>
   );
@@ -185,4 +139,3 @@ function ChevronRightIcon() {
     </svg>
   );
 }
-

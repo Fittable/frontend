@@ -36,14 +36,14 @@ export default function ShiftEditorModal({
   onSave,
   onClose,
 }: ShiftEditorModalProps) {
-  // Selection state - can select multiple
-  const [morningSelected, setMorningSelected] = useState(true);
+  // Independent toggles - can select any combination
+  const [morningSelected, setMorningSelected] = useState(false);
   const [eveningSelected, setEveningSelected] = useState(false);
   const [customSelected, setCustomSelected] = useState(false);
-  
+
   const [vacationMode, setVacationMode] = useState(false);
-  const [customStart, setCustomStart] = useState("09:00");
-  const [customEnd, setCustomEnd] = useState("12:00");
+  const [customStart, setCustomStart] = useState("13:00");
+  const [customEnd, setCustomEnd] = useState("14:45");
   const [note, setNote] = useState("");
   const [userId, setUserId] = useState(currentUserId);
   const [loading, setLoading] = useState(false);
@@ -53,81 +53,70 @@ export default function ShiftEditorModal({
   const detectFromShift = (start: string, end: string) => {
     const s = start.slice(0, 5);
     const e = end.slice(0, 5);
-    
+
     // Check if it matches morning preset
     if ((s === "09:00" || s === "10:00") && e === "12:00") {
-      return { morning: true, evening: false, vacation: s === "10:00" };
+      return { type: "morning", vacation: s === "10:00" };
     }
     // Check if it matches evening preset
     if (s === "13:00" && (e === "17:30" || e === "16:00")) {
-      return { morning: false, evening: true, vacation: e === "16:00" };
+      return { type: "evening", vacation: e === "16:00" };
     }
     // Custom
-    return { morning: false, evening: false, custom: true, start: s, end: e };
+    return { type: "custom", start: s, end: e };
   };
 
   useEffect(() => {
     if (shift) {
+      // Editing existing shift
       const detected = detectFromShift(shift.start_time, shift.end_time);
-      setMorningSelected(detected.morning);
-      setEveningSelected(detected.evening);
-      setCustomSelected(!detected.morning && !detected.evening);
+      setMorningSelected(detected.type === "morning");
+      setEveningSelected(detected.type === "evening");
+      setCustomSelected(detected.type === "custom");
       setVacationMode(detected.vacation || false);
-      if (detected.custom) {
-        setCustomStart(detected.start || "09:00");
-        setCustomEnd(detected.end || "17:00");
+      if (detected.type === "custom") {
+        setCustomStart(detected.start || "13:00");
+        setCustomEnd(detected.end || "14:45");
       }
       setNote(shift.note || "");
       setUserId(shift.user_id);
     } else {
+      // New shift - default to morning
       setMorningSelected(true);
       setEveningSelected(false);
       setCustomSelected(false);
       setVacationMode(false);
-      setCustomStart("09:00");
-      setCustomEnd("12:00");
+      setCustomStart("13:00");
+      setCustomEnd("14:45");
       setNote("");
       setUserId(currentUserId);
     }
   }, [shift, currentUserId]);
 
-  // Toggle handlers
+  // Ensure at least one option is selected
   const handleMorningToggle = () => {
-    if (customSelected) {
-      setCustomSelected(false);
-      setMorningSelected(true);
-    } else {
-      setMorningSelected(!morningSelected);
-      // Ensure at least one is selected
-      if (morningSelected && !eveningSelected) {
-        setEveningSelected(true);
-      }
-    }
+    const newValue = !morningSelected;
+    // If turning off and nothing else selected, don't allow
+    if (!newValue && !eveningSelected && !customSelected) return;
+    setMorningSelected(newValue);
   };
 
   const handleEveningToggle = () => {
-    if (customSelected) {
-      setCustomSelected(false);
-      setEveningSelected(true);
-    } else {
-      setEveningSelected(!eveningSelected);
-      // Ensure at least one is selected
-      if (eveningSelected && !morningSelected) {
-        setMorningSelected(true);
-      }
-    }
+    const newValue = !eveningSelected;
+    if (!newValue && !morningSelected && !customSelected) return;
+    setEveningSelected(newValue);
+  };
+
+  const handleCustomToggle = () => {
+    const newValue = !customSelected;
+    if (!newValue && !morningSelected && !eveningSelected) return;
+    setCustomSelected(newValue);
   };
 
   const handleFullDaySelect = () => {
     setMorningSelected(true);
     setEveningSelected(true);
     setCustomSelected(false);
-  };
-
-  const handleCustomSelect = () => {
-    setCustomSelected(true);
-    setMorningSelected(false);
-    setEveningSelected(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,22 +128,18 @@ export default function ShiftEditorModal({
 
     try {
       if (shift) {
-        // Editing existing shift - just update with selected time
+        // Editing existing shift - update with first selected option
         let startTime: string, endTime: string;
-        
-        if (customSelected) {
-          startTime = customStart;
-          endTime = customEnd;
-        } else if (morningSelected && !eveningSelected) {
+
+        if (morningSelected) {
           startTime = times.morning.start;
           endTime = times.morning.end;
-        } else if (eveningSelected && !morningSelected) {
+        } else if (eveningSelected) {
           startTime = times.evening.start;
           endTime = times.evening.end;
         } else {
-          // Full day - for edit, default to morning (user can't edit to create 2 shifts)
-          startTime = times.morning.start;
-          endTime = times.morning.end;
+          startTime = customStart;
+          endTime = customEnd;
         }
 
         await api.updateShift(shift.id, {
@@ -164,45 +149,32 @@ export default function ShiftEditorModal({
           user_id: isAdmin ? userId : undefined,
         });
       } else {
-        // Creating new shift(s)
+        // Creating new shift(s) - create one for each selected option
+        if (morningSelected) {
+          await api.createShift({
+            date,
+            start_time: times.morning.start + ":00",
+            end_time: times.morning.end + ":00",
+            note: note || undefined,
+            user_id: isAdmin ? userId : undefined,
+          });
+        }
+
+        if (eveningSelected) {
+          await api.createShift({
+            date,
+            start_time: times.evening.start + ":00",
+            end_time: times.evening.end + ":00",
+            note: note || undefined,
+            user_id: isAdmin ? userId : undefined,
+          });
+        }
+
         if (customSelected) {
-          // Single custom shift
           await api.createShift({
             date,
             start_time: customStart + ":00",
             end_time: customEnd + ":00",
-            note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
-          });
-        } else if (morningSelected && eveningSelected) {
-          // Create both morning and evening shifts
-          await api.createShift({
-            date,
-            start_time: times.morning.start + ":00",
-            end_time: times.morning.end + ":00",
-            note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
-          });
-          await api.createShift({
-            date,
-            start_time: times.evening.start + ":00",
-            end_time: times.evening.end + ":00",
-            note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
-          });
-        } else if (morningSelected) {
-          await api.createShift({
-            date,
-            start_time: times.morning.start + ":00",
-            end_time: times.morning.end + ":00",
-            note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
-          });
-        } else if (eveningSelected) {
-          await api.createShift({
-            date,
-            start_time: times.evening.start + ":00",
-            end_time: times.evening.end + ":00",
             note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
@@ -226,23 +198,24 @@ export default function ShiftEditorModal({
     : "";
 
   const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
+
+  // Count how many shifts will be created
+  const shiftCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + (customSelected ? 1 : 0);
   const isFullDay = morningSelected && eveningSelected && !customSelected;
 
   // Get summary of what will be created
   const getTimeSummary = () => {
-    if (customSelected) {
-      return `${customStart} – ${customEnd}`;
-    }
-    if (isFullDay) {
-      return `${times.morning.start} – ${times.morning.end}, ${times.evening.start} – ${times.evening.end}`;
-    }
+    const parts: string[] = [];
     if (morningSelected) {
-      return `${times.morning.start} – ${times.morning.end}`;
+      parts.push(`${times.morning.start}–${times.morning.end}`);
     }
     if (eveningSelected) {
-      return `${times.evening.start} – ${times.evening.end}`;
+      parts.push(`${times.evening.start}–${times.evening.end}`);
     }
-    return "";
+    if (customSelected) {
+      parts.push(`${customStart}–${customEnd}`);
+    }
+    return parts.join(", ");
   };
 
   return (
@@ -303,53 +276,67 @@ export default function ShiftEditorModal({
             </div>
           </div>
 
-          {/* Shift Selection */}
+          {/* Shift Selection - checkboxes style */}
           <div className={styles.field}>
-            <label className={styles.label}>Shift</label>
+            <label className={styles.label}>
+              Shift {!shift && shiftCount > 1 && <span className={styles.badge}>{shiftCount} shifts</span>}
+            </label>
             <div className={styles.shiftOptions}>
               {/* Morning */}
               <button
                 type="button"
                 onClick={handleMorningToggle}
-                className={`${styles.shiftBtn} ${morningSelected && !customSelected ? styles.shiftActive : ""}`}
+                className={`${styles.shiftBtn} ${morningSelected ? styles.shiftActive : ""}`}
               >
-                <span className={styles.shiftName}>Morning</span>
-                <span className={styles.shiftTime}>{times.morning.start} – {times.morning.end}</span>
+                <span className={styles.checkbox}>{morningSelected ? "✓" : ""}</span>
+                <div className={styles.shiftInfo}>
+                  <span className={styles.shiftName}>Morning</span>
+                  <span className={styles.shiftTime}>{times.morning.start} – {times.morning.end}</span>
+                </div>
               </button>
 
               {/* Evening */}
               <button
                 type="button"
                 onClick={handleEveningToggle}
-                className={`${styles.shiftBtn} ${eveningSelected && !customSelected ? styles.shiftActive : ""}`}
+                className={`${styles.shiftBtn} ${eveningSelected ? styles.shiftActive : ""}`}
               >
-                <span className={styles.shiftName}>Evening</span>
-                <span className={styles.shiftTime}>{times.evening.start} – {times.evening.end}</span>
+                <span className={styles.checkbox}>{eveningSelected ? "✓" : ""}</span>
+                <div className={styles.shiftInfo}>
+                  <span className={styles.shiftName}>Evening</span>
+                  <span className={styles.shiftTime}>{times.evening.start} – {times.evening.end}</span>
+                </div>
               </button>
 
-              {/* Full Day */}
+              {/* Full Day shortcut */}
               <button
                 type="button"
                 onClick={handleFullDaySelect}
                 className={`${styles.shiftBtn} ${isFullDay ? styles.shiftActive : ""}`}
               >
-                <span className={styles.shiftName}>Full Day</span>
-                <span className={styles.shiftTime}>Morning + Evening (lunch 12–1)</span>
+                <span className={styles.checkbox}>{isFullDay ? "✓" : ""}</span>
+                <div className={styles.shiftInfo}>
+                  <span className={styles.shiftName}>Full Day</span>
+                  <span className={styles.shiftTime}>Morning + Evening</span>
+                </div>
               </button>
 
               {/* Custom */}
               <button
                 type="button"
-                onClick={handleCustomSelect}
+                onClick={handleCustomToggle}
                 className={`${styles.shiftBtn} ${customSelected ? styles.shiftActive : ""}`}
               >
-                <span className={styles.shiftName}>Custom</span>
-                <span className={styles.shiftTime}>Set your own time</span>
+                <span className={styles.checkbox}>{customSelected ? "✓" : ""}</span>
+                <div className={styles.shiftInfo}>
+                  <span className={styles.shiftName}>Custom</span>
+                  <span className={styles.shiftTime}>{customSelected ? `${customStart} – ${customEnd}` : "Add custom time"}</span>
+                </div>
               </button>
             </div>
           </div>
 
-          {/* Custom Time inputs - only show when custom is selected */}
+          {/* Custom Time inputs - show when custom is selected */}
           {customSelected && (
             <div className={styles.field}>
               <label className={styles.label}>Custom Time</label>
@@ -376,7 +363,7 @@ export default function ShiftEditorModal({
           {/* Time Summary */}
           <div className={styles.summary}>
             <span className={styles.summaryLabel}>
-              {isFullDay && !shift ? "Creating 2 shifts:" : "Time:"}
+              {!shift && shiftCount > 1 ? `Creating ${shiftCount} shifts:` : "Time:"}
             </span>
             <span className={styles.summaryValue}>{getTimeSummary()}</span>
           </div>
@@ -402,7 +389,7 @@ export default function ShiftEditorModal({
               Cancel
             </button>
             <button type="submit" className={styles.saveButton} disabled={loading}>
-              {loading ? "Saving..." : shift ? "Update" : isFullDay ? "Create 2 Shifts" : "Create"}
+              {loading ? "Saving..." : shift ? "Update" : shiftCount > 1 ? `Create ${shiftCount} Shifts` : "Create"}
             </button>
           </div>
         </form>

@@ -92,3 +92,11 @@
   background: var(--accent);
 }
 
+.secondMonth {
+  color: var(--text-muted);
+}
+
+.emptyDay {
+  aspect-ratio: 1;
+}
+
