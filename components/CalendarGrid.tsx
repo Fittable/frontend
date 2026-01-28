@@ -51,7 +51,7 @@ function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
   return Array.from(grouped.values());
 }
 
-const MAX_VISIBLE_USERS = 3;
+const MAX_VISIBLE_USERS = 6;
 
 export default function CalendarGrid({
   workMonth,
