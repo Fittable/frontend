@@ -42,3 +42,16 @@ export interface ApiError {
   detail: string;
 }
 
+export interface UserHoursSummary {
+  user_id: string;
+  username: string | null;
+  daily: Record<string, number>;
+  monthly_total: number;
+  shift_count: number;
+}
+
+export interface HoursSummaryResponse {
+  month: string;
+  users: UserHoursSummary[];
+}
+

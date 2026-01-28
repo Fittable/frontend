@@ -1,7 +1,9 @@
 "use client";
 
-import { User } from "@/lib/types";
-import { WorkMonth } from "@/lib/workMonth";
+import { useState, useEffect } from "react";
+import { User, UserHoursSummary } from "@/lib/types";
+import { WorkMonth, getMonthsToFetch } from "@/lib/workMonth";
+import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
 import styles from "./Sidebar.module.css";
 
@@ -48,6 +50,36 @@ export default function Sidebar({
 }: SidebarProps) {
   const isAdmin = user.role === "admin";
   const showAllSelected = visibleWorkerIds.length === 0;
+  const [userHours, setUserHours] = useState<Record<string, number>>({});
+
+  // Fetch hours for the current work month
+  useEffect(() => {
+    const fetchHours = async () => {
+      try {
+        const monthsToFetch = getMonthsToFetch(workMonth);
+        const hoursByUser: Record<string, number> = {};
+
+        for (const month of monthsToFetch) {
+          const data = await api.getHours(month);
+          for (const userSummary of data.users) {
+            hoursByUser[userSummary.user_id] = 
+              (hoursByUser[userSummary.user_id] || 0) + userSummary.monthly_total;
+          }
+        }
+
+        // Round to 1 decimal place
+        for (const userId in hoursByUser) {
+          hoursByUser[userId] = Math.round(hoursByUser[userId] * 10) / 10;
+        }
+
+        setUserHours(hoursByUser);
+      } catch (err) {
+        console.error("Failed to fetch hours:", err);
+      }
+    };
+
+    fetchHours();
+  }, [workMonth]);
 
   const handleAllWorkersToggle = () => {
     onWorkerFilterChange([]);
@@ -103,6 +135,7 @@ export default function Sidebar({
               {workerList.map((w, index) => {
                 const color = getWorkerColor(index);
                 const isSelected = !showAllSelected && visibleWorkerIds.includes(w.id);
+                const hours = userHours[w.id];
 
                 return (
                   <label key={w.id} className={styles.filterItem}>
@@ -114,6 +147,9 @@ export default function Sidebar({
                     />
                     <span className={styles.filterDot} style={{ background: color }} />
                     <span className={styles.filterLabel}>{w.username}</span>
+                    {hours !== undefined && hours > 0 && (
+                      <span className={styles.hoursLabel}>{hours}h</span>
+                    )}
                     {w.role === "admin" && (
                       <span className={styles.adminBadge}>admin</span>
                     )}

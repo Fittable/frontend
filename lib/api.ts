@@ -1,4 +1,4 @@
-import { User, Shift, ShiftCreate, ShiftUpdate, LoginCredentials } from "./types";
+import { User, Shift, ShiftCreate, ShiftUpdate, LoginCredentials, HoursSummaryResponse } from "./types";
 
 const API_BASE = "/api";
 
@@ -69,5 +69,12 @@ export const api = {
     fetchApi<null>(`/shifts/${id}`, {
       method: "DELETE",
     }),
+
+  // Hours Summary
+  getHours: (month: string, userId?: string) => {
+    const params = new URLSearchParams({ month });
+    if (userId) params.append("user_id", userId);
+    return fetchApi<HoursSummaryResponse>(`/shifts/hours?${params}`);
+  },
 };
 
