@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User } from "@/lib/types";
+import { User, Shift } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
@@ -26,6 +26,7 @@ export function getWorkerColor(index: number): string {
 interface SidebarProps {
   user: User;
   users: User[];
+  shifts: Shift[];
   workMonth: WorkMonth;
   selectedDate: string | null;
   visibleWorkerIds: string[];
@@ -39,6 +40,7 @@ interface SidebarProps {
 export default function Sidebar({
   user,
   users,
+  shifts,
   workMonth,
   selectedDate,
   visibleWorkerIds,
@@ -53,6 +55,7 @@ export default function Sidebar({
   const [userHours, setUserHours] = useState<Record<string, number>>({});
 
   // Fetch hours for the current work month (25th to 24th)
+  // Re-fetch when shifts change (after create/update/delete)
   useEffect(() => {
     const fetchHours = async () => {
       try {
@@ -73,7 +76,7 @@ export default function Sidebar({
     };
 
     fetchHours();
-  }, [workMonth]);
+  }, [workMonth, shifts.length]);
 
   const handleAllWorkersToggle = () => {
     onWorkerFilterChange([]);

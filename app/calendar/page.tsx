@@ -206,6 +206,7 @@ export default function CalendarPage() {
       <Sidebar
         user={user}
         users={users}
+        shifts={shifts}
         workMonth={workMonth}
         selectedDate={selectedDate}
         visibleWorkerIds={visibleWorkerIds}
