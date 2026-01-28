@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User } from "@/lib/types";
+import { Shift, User, Holiday } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonthStartDate,
@@ -14,6 +14,7 @@ interface CalendarGridProps {
   workMonth: WorkMonth;
   shifts: Shift[];
   users: User[];
+  holidays: Holiday[];
   selectedDate: string | null;
   isAdmin: boolean;
   onDayClick: (dateStr: string) => void;
@@ -57,6 +58,7 @@ export default function CalendarGrid({
   workMonth,
   shifts,
   users,
+  holidays,
   selectedDate,
   isAdmin,
   onDayClick,
@@ -67,6 +69,12 @@ export default function CalendarGrid({
   const userIndexMap = new Map<string, number>();
   users.forEach((u, idx) => {
     userIndexMap.set(u.id, idx);
+  });
+
+  // Build holiday lookup map
+  const holidayMap = new Map<string, Holiday>();
+  holidays.forEach((h) => {
+    holidayMap.set(h.date, h);
   });
 
   // Get start and end dates for the work month
@@ -150,6 +158,10 @@ export default function CalendarGrid({
           // Check if this date is in the first month or second month of work period
           const isFirstMonth = date.getMonth() === workMonth.startMonth;
 
+          // Check for holiday
+          const holiday = holidayMap.get(dateStr);
+          const isPublicHoliday = holiday?.type === "Public holiday";
+
           const visibleUsers = groupedShifts.slice(0, MAX_VISIBLE_USERS);
           const hiddenCount = groupedShifts.length - MAX_VISIBLE_USERS;
 
@@ -158,12 +170,16 @@ export default function CalendarGrid({
               key={dateStr}
               className={`${styles.dayCell} ${isSelected ? styles.selected : ""} ${
                 isWeekend ? styles.weekend : ""
-              } ${!isFirstMonth ? styles.secondMonth : ""}`}
+              } ${!isFirstMonth ? styles.secondMonth : ""} ${
+                isPublicHoliday ? styles.publicHoliday : ""
+              }`}
               onClick={() => onDayClick(dateStr)}
               onDoubleClick={() => onDayDoubleClick(dateStr)}
             >
               <div className={styles.dayHeader}>
-                <span className={`${styles.dayNumber} ${isToday ? styles.today : ""}`}>
+                <span className={`${styles.dayNumber} ${isToday ? styles.today : ""} ${
+                  isPublicHoliday ? styles.holidayDay : ""
+                }`}>
                   {date.getDate()}
                 </span>
                 {/* Show month indicator on 1st of month or first day shown */}
@@ -173,6 +189,16 @@ export default function CalendarGrid({
                   </span>
                 )}
               </div>
+
+              {/* Holiday name */}
+              {holiday && (
+                <div 
+                  className={`${styles.holidayName} ${isPublicHoliday ? styles.publicHolidayName : ""}`}
+                  title={`${holiday.name} (${holiday.localName})`}
+                >
+                  {holiday.localName}
+                </div>
+              )}
 
               <div className={styles.shiftsContainer}>
                 {visibleUsers.map((userShifts) => {

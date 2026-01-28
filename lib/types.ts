@@ -55,3 +55,41 @@ export interface HoursSummaryResponse {
   users: UserHoursSummary[];
 }
 
+export interface Holiday {
+  id: string;
+  date: string;
+  name: string;
+  localName: string;
+  type: string;  // "Public holiday" or "Observance"
+  localType: string;  // "공휴일" or "기념일"
+  source: string;  // "google" or "manual"
+}
+
+export interface HolidayCreate {
+  date: string;
+  name: string;
+  localName: string;
+  type: string;
+  localType: string;
+}
+
+export interface HolidayUpdate {
+  date?: string;
+  name?: string;
+  localName?: string;
+  type?: string;
+  localType?: string;
+}
+
+export interface HolidaysResponse {
+  year: number;
+  count: number;
+  holidays: Holiday[];
+}
+
+export interface SyncResponse {
+  year: number;
+  synced: number;
+  message: string;
+}
+

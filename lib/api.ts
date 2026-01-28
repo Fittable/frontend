@@ -1,4 +1,16 @@
-import { User, Shift, ShiftCreate, ShiftUpdate, LoginCredentials, HoursSummaryResponse } from "./types";
+import { 
+  User, 
+  Shift, 
+  ShiftCreate, 
+  ShiftUpdate, 
+  LoginCredentials, 
+  HoursSummaryResponse,
+  Holiday,
+  HolidayCreate,
+  HolidayUpdate,
+  HolidaysResponse,
+  SyncResponse,
+} from "./types";
 
 const API_BASE = "/api";
 
@@ -76,5 +88,33 @@ export const api = {
     if (userId) params.append("user_id", userId);
     return fetchApi<HoursSummaryResponse>(`/shifts/hours?${params}`);
   },
+
+  // Holidays
+  getHolidays: (year?: number) => {
+    const params = year ? `?year=${year}` : "";
+    return fetchApi<HolidaysResponse>(`/holidays${params}`);
+  },
+
+  createHoliday: (data: HolidayCreate) =>
+    fetchApi<Holiday>("/holidays", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateHoliday: (id: string, data: HolidayUpdate) =>
+    fetchApi<Holiday>(`/holidays/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  deleteHoliday: (id: string) =>
+    fetchApi<null>(`/holidays/${id}`, {
+      method: "DELETE",
+    }),
+
+  syncHolidays: (year: number) =>
+    fetchApi<SyncResponse>(`/holidays/sync?year=${year}`, {
+      method: "POST",
+    }),
 };
 

@@ -105,6 +105,38 @@
   background: var(--bg-hover);
 }
 
+/* Holiday styles */
+.publicHoliday {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.publicHoliday.weekend {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.publicHoliday:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.holidayDay {
+  color: #ef4444 !important;
+}
+
+.holidayName {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+  padding: 0 2px;
+}
+
+.publicHolidayName {
+  color: #ef4444;
+  font-weight: 500;
+}
+
 .emptyCell {
   background: var(--bg-primary);
   cursor: default;

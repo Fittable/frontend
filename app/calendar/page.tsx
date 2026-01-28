@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { User, Shift } from "@/lib/types";
+import { User, Shift, Holiday } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonth,
@@ -31,6 +31,7 @@ export default function CalendarPage() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
 
   const loadShifts = useCallback(async () => {
     try {
@@ -53,6 +54,28 @@ export default function CalendarPage() {
       console.error("Failed to load shifts:", err);
     }
   }, [workMonth]);
+
+  const loadHolidays = useCallback(async () => {
+    try {
+      // Fetch holidays for both years in the work month (in case it spans Dec-Jan)
+      const years = new Set([workMonth.startYear, workMonth.endYear]);
+      const allHolidays: Holiday[] = [];
+
+      for (const year of years) {
+        const data = await api.getHolidays(year);
+        allHolidays.push(...data.holidays);
+      }
+
+      // Remove duplicates by date
+      const uniqueHolidays = Array.from(
+        new Map(allHolidays.map((h) => [h.date, h])).values()
+      );
+
+      setHolidays(uniqueHolidays);
+    } catch (err) {
+      console.error("Failed to load holidays:", err);
+    }
+  }, [workMonth.startYear, workMonth.endYear]);
 
   useEffect(() => {
     const init = async () => {
@@ -78,8 +101,9 @@ export default function CalendarPage() {
   useEffect(() => {
     if (user) {
       loadShifts();
+      loadHolidays();
     }
-  }, [user, loadShifts]);
+  }, [user, loadShifts, loadHolidays]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -236,6 +260,7 @@ export default function CalendarPage() {
               workMonth={workMonth}
               shifts={filteredShifts}
               users={users}
+              holidays={holidays}
               selectedDate={selectedDate}
               isAdmin={user.role === "admin"}
               onDayClick={handleDayClick}
