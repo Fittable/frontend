@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, UserHoursSummary } from "@/lib/types";
-import { WorkMonth, getMonthsToFetch } from "@/lib/workMonth";
+import { User } from "@/lib/types";
+import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
 import styles from "./Sidebar.module.css";
@@ -52,24 +52,18 @@ export default function Sidebar({
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
 
-  // Fetch hours for the current work month
+  // Fetch hours for the current work month (25th to 24th)
   useEffect(() => {
     const fetchHours = async () => {
       try {
-        const monthsToFetch = getMonthsToFetch(workMonth);
+        // Format the work month start as YYYY-MM
+        const workMonthStart = `${workMonth.startYear}-${String(workMonth.startMonth + 1).padStart(2, "0")}`;
+        
+        const data = await api.getHours(workMonthStart);
         const hoursByUser: Record<string, number> = {};
-
-        for (const month of monthsToFetch) {
-          const data = await api.getHours(month);
-          for (const userSummary of data.users) {
-            hoursByUser[userSummary.user_id] = 
-              (hoursByUser[userSummary.user_id] || 0) + userSummary.monthly_total;
-          }
-        }
-
-        // Round to 1 decimal place
-        for (const userId in hoursByUser) {
-          hoursByUser[userId] = Math.round(hoursByUser[userId] * 10) / 10;
+        
+        for (const userSummary of data.users) {
+          hoursByUser[userSummary.user_id] = Math.round(userSummary.monthly_total * 10) / 10;
         }
 
         setUserHours(hoursByUser);
