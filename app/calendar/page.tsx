@@ -83,12 +83,9 @@ export default function CalendarPage() {
         const me = await api.getMe();
         setUser(me);
 
-        if (me.role === "admin") {
-          const userList = await api.getUsers();
-          setUsers(userList);
-        } else {
-          setUsers([me]);
-        }
+        // All users can see all workers (for shared schedule visibility)
+        const userList = await api.getUsers();
+        setUsers(userList);
       } catch {
         router.push("/login");
         return;
@@ -262,7 +259,6 @@ export default function CalendarPage() {
               users={users}
               holidays={holidays}
               selectedDate={selectedDate}
-              isAdmin={user.role === "admin"}
               onDayClick={handleDayClick}
               onShiftClick={handleShiftClick}
               onDayDoubleClick={handleDayDoubleClick}

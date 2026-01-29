@@ -50,7 +50,6 @@ export default function Sidebar({
   isOpen,
   onClose,
 }: SidebarProps) {
-  const isAdmin = user.role === "admin";
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
 
@@ -93,7 +92,8 @@ export default function Sidebar({
     }
   };
 
-  const workerList = isAdmin ? users : users.filter((u) => u.id === user.id);
+  // All users can see all workers
+  const workerList = users;
 
   return (
     <>
@@ -110,8 +110,8 @@ export default function Sidebar({
           />
         </div>
 
-        {/* Worker Filter - Only show for admin with multiple workers */}
-        {isAdmin && workerList.length > 0 && (
+        {/* Worker Filter - Show for all users */}
+        {workerList.length > 0 && (
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Workers</h3>
             <div className={styles.filterList}>

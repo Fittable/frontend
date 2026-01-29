@@ -16,7 +16,6 @@ interface CalendarGridProps {
   users: User[];
   holidays: Holiday[];
   selectedDate: string | null;
-  isAdmin: boolean;
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
@@ -60,7 +59,6 @@ export default function CalendarGrid({
   users,
   holidays,
   selectedDate,
-  isAdmin,
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
@@ -209,9 +207,8 @@ export default function CalendarGrid({
                     .map((s) => `${formatTime(s.start_time)}–${formatTime(s.end_time)}`)
                     .join(", ");
 
-                  const displayText = isAdmin
-                    ? `${userShifts.username} · ${timesDisplay}`
-                    : timesDisplay;
+                  // Show username for all users (shared schedule visibility)
+                  const displayText = `${userShifts.username} · ${timesDisplay}`;
 
                   return (
                     <button
