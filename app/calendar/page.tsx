@@ -285,8 +285,15 @@ export default function CalendarPage() {
       {/* Modal */}
       {showModal && (
         <ShiftEditorModal
-          shift={editingShift}
-          date={selectedDate || ""}
+          existingShifts={
+            editingShift
+              ? shifts.filter(
+                  (s) => s.date === editingShift.date && s.user_id === editingShift.user_id
+                )
+              : []
+          }
+          editingUserId={editingShift?.user_id}
+          date={selectedDate || editingShift?.date || ""}
           users={users}
           isAdmin={user.role === "admin"}
           currentUserId={user.id}

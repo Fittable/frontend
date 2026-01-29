@@ -6,11 +6,12 @@ import { Shift, User } from "@/lib/types";
 import styles from "./ShiftEditorModal.module.css";
 
 interface ShiftEditorModalProps {
-  shift: Shift | null;
+  existingShifts: Shift[]; // All shifts for the user on this date
   date: string;
   users: User[];
   isAdmin: boolean;
   currentUserId: string;
+  editingUserId?: string; // The user whose shifts we're editing (for edit mode)
   onSave: () => void;
   onClose: () => void;
 }
@@ -27,12 +28,30 @@ const PRESETS = {
   },
 };
 
+// Detect shift type from times
+function detectShiftType(start: string, end: string): { type: "morning" | "evening" | "custom"; vacation?: boolean; start?: string; end?: string } {
+  const s = start.slice(0, 5);
+  const e = end.slice(0, 5);
+
+  // Check if it matches morning preset
+  if ((s === "09:00" || s === "10:00") && e === "12:00") {
+    return { type: "morning", vacation: s === "10:00" };
+  }
+  // Check if it matches evening preset
+  if (s === "13:00" && (e === "17:30" || e === "16:00")) {
+    return { type: "evening", vacation: e === "16:00" };
+  }
+  // Custom
+  return { type: "custom", start: s, end: e };
+}
+
 export default function ShiftEditorModal({
-  shift,
+  existingShifts,
   date,
   users,
   isAdmin,
   currentUserId,
+  editingUserId,
   onSave,
   onClose,
 }: ShiftEditorModalProps) {
@@ -45,41 +64,57 @@ export default function ShiftEditorModal({
   const [customStart, setCustomStart] = useState("13:00");
   const [customEnd, setCustomEnd] = useState("14:45");
   const [note, setNote] = useState("");
-  const [userId, setUserId] = useState(currentUserId);
+  const [userId, setUserId] = useState(editingUserId || currentUserId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Detect preset from existing shift times
-  const detectFromShift = (start: string, end: string) => {
-    const s = start.slice(0, 5);
-    const e = end.slice(0, 5);
+  // Track existing shift IDs for each type
+  const [morningShiftId, setMorningShiftId] = useState<string | null>(null);
+  const [eveningShiftId, setEveningShiftId] = useState<string | null>(null);
+  const [customShiftId, setCustomShiftId] = useState<string | null>(null);
 
-    // Check if it matches morning preset
-    if ((s === "09:00" || s === "10:00") && e === "12:00") {
-      return { type: "morning", vacation: s === "10:00" };
-    }
-    // Check if it matches evening preset
-    if (s === "13:00" && (e === "17:30" || e === "16:00")) {
-      return { type: "evening", vacation: e === "16:00" };
-    }
-    // Custom
-    return { type: "custom", start: s, end: e };
-  };
+  const isEditMode = existingShifts.length > 0;
 
   useEffect(() => {
-    if (shift) {
-      // Editing existing shift
-      const detected = detectFromShift(shift.start_time, shift.end_time);
-      setMorningSelected(detected.type === "morning");
-      setEveningSelected(detected.type === "evening");
-      setCustomSelected(detected.type === "custom");
-      setVacationMode(detected.vacation || false);
-      if (detected.type === "custom") {
-        setCustomStart(detected.start || "13:00");
-        setCustomEnd(detected.end || "14:45");
-      }
-      setNote(shift.note || "");
-      setUserId(shift.user_id);
+    if (isEditMode) {
+      // Analyze existing shifts to determine state
+      let hasMorning = false;
+      let hasEvening = false;
+      let hasCustom = false;
+      let detectedVacation = false;
+      let customStartTime = "13:00";
+      let customEndTime = "14:45";
+      let shiftNote = "";
+
+      existingShifts.forEach((shift) => {
+        const detected = detectShiftType(shift.start_time, shift.end_time);
+        
+        if (detected.type === "morning") {
+          hasMorning = true;
+          setMorningShiftId(shift.id);
+          if (detected.vacation) detectedVacation = true;
+        } else if (detected.type === "evening") {
+          hasEvening = true;
+          setEveningShiftId(shift.id);
+          if (detected.vacation) detectedVacation = true;
+        } else {
+          hasCustom = true;
+          setCustomShiftId(shift.id);
+          customStartTime = detected.start || "13:00";
+          customEndTime = detected.end || "14:45";
+        }
+        
+        if (shift.note) shiftNote = shift.note;
+      });
+
+      setMorningSelected(hasMorning);
+      setEveningSelected(hasEvening);
+      setCustomSelected(hasCustom);
+      setVacationMode(detectedVacation);
+      setCustomStart(customStartTime);
+      setCustomEnd(customEndTime);
+      setNote(shiftNote);
+      setUserId(editingUserId || currentUserId);
     } else {
       // New shift - default to morning
       setMorningSelected(true);
@@ -90,33 +125,28 @@ export default function ShiftEditorModal({
       setCustomEnd("14:45");
       setNote("");
       setUserId(currentUserId);
+      setMorningShiftId(null);
+      setEveningShiftId(null);
+      setCustomShiftId(null);
     }
-  }, [shift, currentUserId]);
+  }, [existingShifts, currentUserId, editingUserId, isEditMode]);
 
-  // Ensure at least one option is selected
-  const handleMorningToggle = () => {
-    const newValue = !morningSelected;
-    // If turning off and nothing else selected, don't allow
-    if (!newValue && !eveningSelected && !customSelected) return;
-    setMorningSelected(newValue);
-  };
-
-  const handleEveningToggle = () => {
-    const newValue = !eveningSelected;
-    if (!newValue && !morningSelected && !customSelected) return;
-    setEveningSelected(newValue);
-  };
-
-  const handleCustomToggle = () => {
-    const newValue = !customSelected;
-    if (!newValue && !morningSelected && !eveningSelected) return;
-    setCustomSelected(newValue);
-  };
+  // Simple toggles - can check/uncheck freely
+  // If nothing is checked = no shifts (delete all)
+  const handleMorningToggle = () => setMorningSelected(!morningSelected);
+  const handleEveningToggle = () => setEveningSelected(!eveningSelected);
+  const handleCustomToggle = () => setCustomSelected(!customSelected);
 
   const handleFullDaySelect = () => {
-    setMorningSelected(true);
-    setEveningSelected(true);
-    setCustomSelected(false);
+    // If already full day, clear all
+    if (morningSelected && eveningSelected && !customSelected) {
+      setMorningSelected(false);
+      setEveningSelected(false);
+    } else {
+      setMorningSelected(true);
+      setEveningSelected(true);
+      setCustomSelected(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,61 +155,81 @@ export default function ShiftEditorModal({
     setLoading(true);
 
     const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
+    const targetUserId = isAdmin ? userId : currentUserId;
 
     try {
-      if (shift) {
-        // Editing existing shift - update with first selected option
-        let startTime: string, endTime: string;
-
-        if (morningSelected) {
-          startTime = times.morning.start;
-          endTime = times.morning.end;
-        } else if (eveningSelected) {
-          startTime = times.evening.start;
-          endTime = times.evening.end;
+      // Handle morning shift
+      if (morningSelected) {
+        if (morningShiftId) {
+          // Update existing morning shift
+          await api.updateShift(morningShiftId, {
+            start_time: times.morning.start + ":00",
+            end_time: times.morning.end + ":00",
+            note: note || undefined,
+          });
         } else {
-          startTime = customStart;
-          endTime = customEnd;
-        }
-
-        await api.updateShift(shift.id, {
-          start_time: startTime + ":00",
-          end_time: endTime + ":00",
-          note: note || undefined,
-          user_id: isAdmin ? userId : undefined,
-        });
-      } else {
-        // Creating new shift(s) - create one for each selected option
-        if (morningSelected) {
+          // Create new morning shift
           await api.createShift({
             date,
             start_time: times.morning.start + ":00",
             end_time: times.morning.end + ":00",
             note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
+            user_id: isAdmin ? targetUserId : undefined,
           });
         }
+      } else if (morningShiftId) {
+        // Delete morning shift (was selected, now unchecked)
+        await api.deleteShift(morningShiftId);
+      }
 
-        if (eveningSelected) {
+      // Handle evening shift
+      if (eveningSelected) {
+        if (eveningShiftId) {
+          // Update existing evening shift
+          await api.updateShift(eveningShiftId, {
+            start_time: times.evening.start + ":00",
+            end_time: times.evening.end + ":00",
+            note: note || undefined,
+          });
+        } else {
+          // Create new evening shift
           await api.createShift({
             date,
             start_time: times.evening.start + ":00",
             end_time: times.evening.end + ":00",
             note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
+            user_id: isAdmin ? targetUserId : undefined,
           });
         }
+      } else if (eveningShiftId) {
+        // Delete evening shift
+        await api.deleteShift(eveningShiftId);
+      }
 
-        if (customSelected) {
+      // Handle custom shift
+      if (customSelected) {
+        if (customShiftId) {
+          // Update existing custom shift
+          await api.updateShift(customShiftId, {
+            start_time: customStart + ":00",
+            end_time: customEnd + ":00",
+            note: note || undefined,
+          });
+        } else {
+          // Create new custom shift
           await api.createShift({
             date,
             start_time: customStart + ":00",
             end_time: customEnd + ":00",
             note: note || undefined,
-            user_id: isAdmin ? userId : undefined,
+            user_id: isAdmin ? targetUserId : undefined,
           });
         }
+      } else if (customShiftId) {
+        // Delete custom shift
+        await api.deleteShift(customShiftId);
       }
+
       onSave();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -199,12 +249,18 @@ export default function ShiftEditorModal({
 
   const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
 
-  // Count how many shifts will be created
+  // Count how many shifts will exist after save
   const shiftCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + (customSelected ? 1 : 0);
   const isFullDay = morningSelected && eveningSelected && !customSelected;
 
-  // Get summary of what will be created
+  // Check if we're removing all shifts
+  const isRemovingAll = shiftCount === 0 && isEditMode;
+
+  // Get summary of times
   const getTimeSummary = () => {
+    if (shiftCount === 0) {
+      return isEditMode ? "Remove all shifts" : "Select a time";
+    }
     const parts: string[] = [];
     if (morningSelected) {
       parts.push(`${times.morning.start}–${times.morning.end}`);
@@ -218,12 +274,18 @@ export default function ShiftEditorModal({
     return parts.join(", ");
   };
 
+  // Get the username being edited
+  const editingUsername = users.find(u => u.id === userId)?.username;
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {shift ? "Edit Shift" : "New Shift"}
+            {isEditMode ? "Edit Shifts" : "New Shift"}
+            {isEditMode && editingUsername && (
+              <span className={styles.subtitle}> – {editingUsername}</span>
+            )}
           </h2>
           <button onClick={onClose} className={styles.closeButton} aria-label="Close">
             ×
@@ -237,8 +299,8 @@ export default function ShiftEditorModal({
             <div className={styles.dateDisplay}>{formattedDate}</div>
           </div>
 
-          {/* Worker select (admin only) */}
-          {isAdmin && users.length > 0 && (
+          {/* Worker select (admin only, only for new shifts) */}
+          {isAdmin && users.length > 0 && !isEditMode && (
             <div className={styles.field}>
               <label className={styles.label}>Assign to</label>
               <select
@@ -279,7 +341,7 @@ export default function ShiftEditorModal({
           {/* Shift Selection - checkboxes style */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Shift {!shift && shiftCount > 1 && <span className={styles.badge}>{shiftCount} shifts</span>}
+              Shift {shiftCount > 1 && <span className={styles.badge}>{shiftCount} shifts</span>}
             </label>
             <div className={styles.shiftOptions}>
               {/* Morning */}
@@ -361,11 +423,13 @@ export default function ShiftEditorModal({
           )}
 
           {/* Time Summary */}
-          <div className={styles.summary}>
+          <div className={`${styles.summary} ${isRemovingAll ? styles.summaryWarning : ""}`}>
             <span className={styles.summaryLabel}>
-              {!shift && shiftCount > 1 ? `Creating ${shiftCount} shifts:` : "Time:"}
+              {shiftCount === 0 ? "" : shiftCount > 1 ? `${shiftCount} shifts:` : "Time:"}
             </span>
-            <span className={styles.summaryValue}>{getTimeSummary()}</span>
+            <span className={`${styles.summaryValue} ${isRemovingAll ? styles.warningText : ""}`}>
+              {getTimeSummary()}
+            </span>
           </div>
 
           {/* Note input */}
@@ -388,8 +452,17 @@ export default function ShiftEditorModal({
             <button type="button" onClick={onClose} className={styles.cancelButton}>
               Cancel
             </button>
-            <button type="submit" className={styles.saveButton} disabled={loading}>
-              {loading ? "Saving..." : shift ? "Update" : shiftCount > 1 ? `Create ${shiftCount} Shifts` : "Create"}
+            <button 
+              type="submit" 
+              className={`${styles.saveButton} ${isRemovingAll ? styles.deleteButton : ""}`} 
+              disabled={loading || (shiftCount === 0 && !isEditMode)}
+            >
+              {loading 
+                ? "Saving..." 
+                : isRemovingAll 
+                  ? "Remove Shifts" 
+                  : "Save"
+              }
             </button>
           </div>
         </form>
