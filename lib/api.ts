@@ -58,6 +58,12 @@ export const api = {
   // Users (admin only)
   getUsers: () => fetchApi<User[]>("/users"),
 
+  updateUserRole: (userId: string, role: "admin" | "worker") =>
+    fetchApi<User>(`/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
+
   // Shifts
   getShifts: (month: string, userId?: string) => {
     const params = new URLSearchParams({ month });
