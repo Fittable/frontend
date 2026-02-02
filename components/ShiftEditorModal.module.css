@@ -54,11 +54,6 @@
   margin: 0;
 }
 
-.subtitle {
-  font-weight: 400;
-  color: var(--text-muted);
-}
-
 .closeButton {
   width: 28px;
   height: 28px;
@@ -282,15 +277,6 @@
   color: var(--accent);
 }
 
-.summaryWarning {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.warningText {
-  color: #f87171;
-}
-
 /* Error */
 .error {
   padding: 10px 12px;
@@ -341,14 +327,6 @@
 
 .saveButton:disabled {
   opacity: 0.7;
-}
-
-.deleteButton {
-  background: #ef4444;
-}
-
-.deleteButton:hover:not(:disabled) {
-  background: #dc2626;
 }
 
 /* Mobile styles */

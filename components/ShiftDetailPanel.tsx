@@ -125,7 +125,9 @@ export default function ShiftDetailPanel({
                     style={{ backgroundColor: color }}
                   />
                   <div className={styles.shiftDetails}>
-                    <div className={styles.shiftWorker}>{userShifts.username}</div>
+                    {isAdmin && (
+                      <div className={styles.shiftWorker}>{userShifts.username}</div>
+                    )}
                     <div className={styles.shiftTime}>{timesDisplay}</div>
                     {notes && (
                       <div className={styles.shiftNote}>{notes}</div>
