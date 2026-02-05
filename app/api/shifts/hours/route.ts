@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ detail: "Month parameter required" }, { status: 400 });
   }
 
-  let url = `${BACKEND_URL}/shifts/hours?month=${month}`;
+  let url = `${BACKEND_URL}/api/shifts/hours?month=${month}`;
   if (userId) url += `&user_id=${userId}`;
 
   try {

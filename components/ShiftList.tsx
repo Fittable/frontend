@@ -38,8 +38,8 @@ export default function ShiftList({
             <div style={styles.time}>
               {formatTime(shift.start_time)} – {formatTime(shift.end_time)}
             </div>
-            {isAdmin && shift.username && (
-              <div style={styles.username}>{shift.username}</div>
+            {isAdmin && shift.name && (
+              <div style={styles.username}>{shift.name}</div>
             )}
             {shift.note && <div style={styles.note}>{shift.note}</div>}
           </div>

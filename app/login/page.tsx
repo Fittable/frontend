@@ -7,7 +7,7 @@ import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await api.login({ username, password });
+      await api.login({ student_id: studentId, password });
       router.push("/calendar");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -45,16 +45,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Username</label>
+            <label className={styles.label}>Student ID</label>
             <div className={styles.inputWrapper}>
               <UserIcon />
               <input
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
                 className={styles.input}
-                placeholder="Enter your username"
-                required
+                placeholder="Enter your student ID"
                 autoFocus
                 autoComplete="username"
               />

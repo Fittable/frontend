@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${BACKEND_URL}/auth/me`, {
+    const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

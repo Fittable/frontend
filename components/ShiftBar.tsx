@@ -19,8 +19,8 @@ export default function ShiftBar({
   const formatTime = (time: string) => time.slice(0, 5);
 
   const timeRange = `${formatTime(shift.start_time)}–${formatTime(shift.end_time)}`;
-  const displayText = showWorkerName && shift.username 
-    ? `${shift.username}` 
+  const displayText = showWorkerName && shift.name 
+    ? `${shift.name}` 
     : timeRange;
 
   return (
@@ -31,7 +31,7 @@ export default function ShiftBar({
         backgroundColor: `${color}20`,
         borderLeftColor: color,
       }}
-      title={`${shift.username || 'Shift'}: ${timeRange}${shift.note ? ` - ${shift.note}` : ''}`}
+      title={`${shift.name || 'Shift'}: ${timeRange}${shift.note ? ` - ${shift.note}` : ''}`}
     >
       <span className={styles.text} style={{ color }}>
         {displayText}

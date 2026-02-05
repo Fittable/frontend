@@ -1,8 +1,10 @@
 export interface User {
   id: string;
-  username: string;
+  student_id: string;
+  name: string | null;
   role: "admin" | "worker";
   created_at?: string;
+  status?: string;
 }
 
 export interface Shift {
@@ -14,7 +16,7 @@ export interface Shift {
   note: string | null;
   created_by: string;
   updated_at: string;
-  username?: string;
+  name?: string | null;
 }
 
 export interface ShiftCreate {
@@ -33,9 +35,20 @@ export interface ShiftUpdate {
   user_id?: string;
 }
 
-export interface LoginCredentials {
-  username: string;
+/** Request body for POST /api/auth/login (LoginRequest in OpenAPI) */
+export interface LoginRequest {
+  student_id?: string;
   password: string;
+}
+
+/** Alias for form/UI use */
+export type LoginCredentials = LoginRequest;
+
+/** Response from POST /api/auth/login (LoginResponse in OpenAPI) */
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  token: string | null;
 }
 
 export interface ApiError {
@@ -44,7 +57,7 @@ export interface ApiError {
 
 export interface UserHoursSummary {
   user_id: string;
-  username: string | null;
+  name: string | null;
   daily: Record<string, number>;
   monthly_total: number;
   shift_count: number;
@@ -93,3 +106,10 @@ export interface SyncResponse {
   message: string;
 }
 
+export interface UserMe {
+  id: string;
+  student_id: string;
+  name: string | null;
+  role: string;
+  status: string;
+}

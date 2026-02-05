@@ -19,7 +19,7 @@ interface ShiftDetailPanelProps {
 // Group shifts by user
 type UserShifts = {
   userId: string;
-  username: string;
+  name: string;
   shifts: Shift[];
 };
 
@@ -33,7 +33,7 @@ function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
     } else {
       grouped.set(shift.user_id, {
         userId: shift.user_id,
-        username: shift.username || "Unknown",
+        name: shift.name || "Unknown",
         shifts: [shift],
       });
     }
@@ -126,7 +126,7 @@ export default function ShiftDetailPanel({
                   />
                   <div className={styles.shiftDetails}>
                     {isAdmin && (
-                      <div className={styles.shiftWorker}>{userShifts.username}</div>
+                      <div className={styles.shiftWorker}>{userShifts.name}</div>
                     )}
                     <div className={styles.shiftTime}>{timesDisplay}</div>
                     {notes && (
