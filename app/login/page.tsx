@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Show error from redirect (e.g. session expired) — read from URL so it stays visible
+  useEffect(() => {
+    const errorFromUrl = searchParams.get("error");
+    if (errorFromUrl) {
+      try {
+        setError(decodeURIComponent(errorFromUrl));
+      } catch {
+        setError("Please sign in again.");
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

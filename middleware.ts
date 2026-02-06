@@ -5,12 +5,8 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("access_token");
   const { pathname } = request.nextUrl;
 
-  // Public routes
+  // Public routes: always show login so user can see it (e.g. when token expired and redirect has ?error=)
   if (pathname === "/login" || pathname === "/") {
-    // If already logged in, redirect to calendar
-    if (token) {
-      return NextResponse.redirect(new URL("/calendar", request.url));
-    }
     return NextResponse.next();
   }
 

@@ -102,9 +102,9 @@ export default function CalendarPage() {
       } catch (err) {
         console.error("Failed to load user:", err);
         if (!isMounted) return;
-        // Clear loading state before redirecting
         setLoading(false);
-        router.push("/login");
+        const message = err instanceof Error ? err.message : "Please sign in again.";
+        router.push(`/login?error=${encodeURIComponent(message)}`);
         return;
       }
       if (isMounted) setLoading(false);
@@ -115,7 +115,7 @@ export default function CalendarPage() {
       if (isMounted) {
         console.error("Initialization timeout - redirecting to login");
         setLoading(false);
-        router.push("/login");
+        router.push("/login?error=" + encodeURIComponent("Session timed out. Please sign in again."));
       }
     }, 10000); // 10 second timeout
     

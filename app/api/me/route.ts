@@ -14,7 +14,17 @@ export async function GET(request: NextRequest) {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      // Forward backend error so the UI can show it (e.g. "Invalid or expired session token. Please login again.")
+      const detail =
+        typeof data.detail === "string"
+          ? data.detail
+          : data.message ?? "Please sign in again.";
+      return NextResponse.json({ detail }, { status: res.status });
+    }
+
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error("Me proxy error:", error);
