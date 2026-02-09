@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Login proxy error:", error);
-    return NextResponse.json({ detail: "Login failed" }, { status: 500 });
+    return NextResponse.json({ detail: "Login fucking failed" }, { status: 500 });
   }
 }
 
