@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { User, Shift, Holiday } from "@/lib/types";
+import { User, UserMe, Shift, Holiday } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonth,
@@ -58,10 +58,11 @@ export default function CalendarPage() {
   const loadHolidays = useCallback(async () => {
     try {
       // Fetch holidays for both years in the work month (in case it spans Dec-Jan)
-      const years = new Set([workMonth.startYear, workMonth.endYear]);
+      const years = [workMonth.startYear, workMonth.endYear];
+      const uniqueYears = Array.from(new Set(years));
       const allHolidays: Holiday[] = [];
 
-      for (const year of years) {
+      for (const year of uniqueYears) {
         const data = await api.getHolidays(year);
         allHolidays.push(...data.holidays);
       }
@@ -78,21 +79,52 @@ export default function CalendarPage() {
   }, [workMonth.startYear, workMonth.endYear]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const init = async () => {
       try {
         const me = await api.getMe();
-        setUser(me);
+        if (!isMounted) return;
+        
+        // Convert UserMe to User format (they're compatible)
+        setUser(me as User);
 
         // All users can see all workers (for shared schedule visibility)
-        const userList = await api.getUsers();
-        setUsers(userList);
-      } catch {
-        router.push("/login");
+        try {
+          const userList = await api.getUsers();
+          if (!isMounted) return;
+          setUsers(userList);
+        } catch (err) {
+          console.error("Failed to load users:", err);
+          // Continue even if users list fails - user can still use the app
+          if (isMounted) setUsers([]);
+        }
+      } catch (err) {
+        console.error("Failed to load user:", err);
+        if (!isMounted) return;
+        setLoading(false);
+        const message = err instanceof Error ? err.message : "Please sign in again.";
+        router.push(`/login?error=${encodeURIComponent(message)}`);
         return;
       }
-      setLoading(false);
+      if (isMounted) setLoading(false);
     };
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.error("Initialization timeout - redirecting to login");
+        setLoading(false);
+        router.push("/login?error=" + encodeURIComponent("Session timed out. Please sign in again."));
+      }
+    }, 10000); // 10 second timeout
+    
     init();
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [router]);
 
   useEffect(() => {

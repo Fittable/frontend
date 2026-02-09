@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function PATCH(
   request: NextRequest,
@@ -16,7 +16,7 @@ export async function PATCH(
   try {
     const body = await request.json();
 
-    const res = await fetch(`${BACKEND_URL}/users/${id}/role`, {
+    const res = await fetch(`${BACKEND_URL}/api/users/${id}/role`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,

@@ -143,7 +143,7 @@ export default function Sidebar({
                       className={styles.filterCheckbox}
                     />
                     <span className={styles.filterDot} style={{ background: color }} />
-                    <span className={styles.filterLabel}>{w.username}</span>
+                    <span className={styles.filterLabel}>{w.name || w.student_id}</span>
                     {hours !== undefined && hours > 0 && (
                       <span className={styles.hoursLabel}>{hours}h</span>
                     )}
@@ -164,10 +164,10 @@ export default function Sidebar({
         <div className={styles.userSection}>
           <div className={styles.userInfo}>
             <div className={styles.userAvatar}>
-              {user.username.charAt(0).toUpperCase()}
+              {(user.name || user.student_id).charAt(0).toUpperCase()}
             </div>
             <div className={styles.userDetails}>
-              <span className={styles.userName}>{user.username}</span>
+              <span className={styles.userName}>{user.name || user.student_id}</span>
               <span className={styles.userRole}>{user.role}</span>
             </div>
           </div>

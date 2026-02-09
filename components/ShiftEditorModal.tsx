@@ -248,7 +248,7 @@ export default function ShiftEditorModal({
               >
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.username} {u.role === "admin" ? "(admin)" : ""}
+                    {u.name || u.student_id} {u.role === "admin" ? "(admin)" : ""}
                   </option>
                 ))}
               </select>

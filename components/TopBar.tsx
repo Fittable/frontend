@@ -52,7 +52,7 @@ export default function TopBar({
             <option value="">All Users</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.username}
+                {u.name || u.student_id}
               </option>
             ))}
           </select>
@@ -61,7 +61,7 @@ export default function TopBar({
 
       <div style={styles.right}>
         <span style={styles.userInfo}>
-          {user.username}{" "}
+          {user.name || user.student_id}{" "}
           <span style={styles.role}>({user.role})</span>
         </span>
         <button onClick={onLogout} style={styles.logoutButton}>

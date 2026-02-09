@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
@@ -10,11 +10,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${BACKEND_URL}/auth/me`, {
+    const res = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      // Forward backend error so the UI can show it (e.g. "Invalid or expired session token. Please login again.")
+      const detail =
+        typeof data.detail === "string"
+          ? data.detail
+          : data.message ?? "Please sign in again.";
+      return NextResponse.json({ detail }, { status: res.status });
+    }
+
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error("Me proxy error:", error);

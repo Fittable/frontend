@@ -1,9 +1,11 @@
 import { 
   User, 
+  UserMe,
   Shift, 
   ShiftCreate, 
   ShiftUpdate, 
-  LoginCredentials, 
+  LoginCredentials,
+  LoginResponse,
   HoursSummaryResponse,
   Holiday,
   HolidayCreate,
@@ -18,32 +20,41 @@ async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    credentials: "include",
-  });
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      credentials: "include",
+    });
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(error.detail || "Request failed");
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: `Request failed with status ${res.status}` }));
+      const message = error.detail ?? error.message ?? `Request failed with status ${res.status}`;
+      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    }
+
+    // Handle 204 No Content
+    if (res.status === 204) {
+      return null as T;
+    }
+
+    return res.json();
+  } catch (error) {
+    // Re-throw with more context
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Network error or invalid response");
   }
-
-  // Handle 204 No Content
-  if (res.status === 204) {
-    return null as T;
-  }
-
-  return res.json();
 }
 
 export const api = {
   // Auth
   login: (credentials: LoginCredentials) =>
-    fetchApi<{ access_token: string }>("/auth/login", {
+    fetchApi<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     }),
@@ -53,7 +64,7 @@ export const api = {
       method: "POST",
     }),
 
-  getMe: () => fetchApi<User>("/me"),
+  getMe: () => fetchApi<UserMe>("/me"),
 
   // Users (admin only)
   getUsers: () => fetchApi<User[]>("/users"),

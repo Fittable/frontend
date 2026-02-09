@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const month = searchParams.get("month");
   const userId = searchParams.get("user_id");
 
-  let url = `${BACKEND_URL}/shifts?month=${month}`;
+  let url = `${BACKEND_URL}/api/shifts?month=${month}`;
   if (userId) url += `&user_id=${userId}`;
 
   try {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const res = await fetch(`${BACKEND_URL}/shifts`, {
+    const res = await fetch(`${BACKEND_URL}/api/shifts`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

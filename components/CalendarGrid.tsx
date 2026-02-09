@@ -24,7 +24,7 @@ interface CalendarGridProps {
 // Group shifts by user for a given day
 type UserShifts = {
   userId: string;
-  username: string;
+  name: string;
   shifts: Shift[];
 };
 
@@ -38,7 +38,7 @@ function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
     } else {
       grouped.set(shift.user_id, {
         userId: shift.user_id,
-        username: shift.username || "Unknown",
+        name: shift.name || "Unknown",
         shifts: [shift],
       });
     }
@@ -207,8 +207,8 @@ export default function CalendarGrid({
                     .map((s) => `${formatTime(s.start_time)}–${formatTime(s.end_time)}`)
                     .join(", ");
 
-                  // Show username for all users (shared schedule visibility)
-                  const displayText = `${userShifts.username} · ${timesDisplay}`;
+                  // Show name for all users (shared schedule visibility)
+                  const displayText = `${userShifts.name} · ${timesDisplay}`;
 
                   return (
                     <button
@@ -222,7 +222,7 @@ export default function CalendarGrid({
                         backgroundColor: `${color}20`,
                         borderLeftColor: color,
                       }}
-                      title={`${userShifts.username}: ${timesDisplay}`}
+                      title={`${userShifts.name}: ${timesDisplay}`}
                     >
                       <span className={styles.shiftText} style={{ color }}>
                         {displayText}

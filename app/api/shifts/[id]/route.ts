@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function PATCH(
   request: NextRequest,
@@ -15,7 +15,7 @@ export async function PATCH(
   try {
     const body = await request.json();
 
-    const res = await fetch(`${BACKEND_URL}/shifts/${params.id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/shifts/${params.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export async function DELETE(
   }
 
   try {
-    const res = await fetch(`${BACKEND_URL}/shifts/${params.id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/shifts/${params.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const year = searchParams.get("year");
 
-  let url = `${BACKEND_URL}/holidays`;
+  let url = `${BACKEND_URL}/api/holidays`;
   if (year) {
     url += `?year=${year}`;
   }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const res = await fetch(`${BACKEND_URL}/holidays`, {
+    const res = await fetch(`${BACKEND_URL}/api/holidays`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

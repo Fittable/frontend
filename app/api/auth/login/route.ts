@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+    const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -15,23 +14,35 @@ export async function POST(request: NextRequest) {
     const data = await res.json();
 
     if (!res.ok) {
-      return NextResponse.json(data, { status: res.status });
+      // Pass through backend error; client shows detail or message
+      const detail = data.detail ?? data.message ?? "Request failed";
+      return NextResponse.json(
+        { detail: typeof detail === "string" ? detail : JSON.stringify(detail) },
+        { status: res.status }
+      );
     }
 
-    // Set httpOnly cookie from backend token
-    const response = NextResponse.json(data);
-    response.cookies.set("access_token", data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 2, // 2 hours
-      path: "/",
-    });
+    // LoginResponse: { success, message, token }
+    if (data.success && data.token) {
+      const response = NextResponse.json(data);
+      response.cookies.set("access_token", data.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24, // 24 hours (matching backend)
+        path: "/",
+      });
+      return response;
+    }
 
-    return response;
+    // 200 but success: false (e.g. invalid credentials)
+    return NextResponse.json(
+      { detail: data.message ?? "Login failed" },
+      { status: 401 }
+    );
   } catch (error) {
     console.error("Login proxy error:", error);
-    return NextResponse.json({ detail: "Login failed" }, { status: 500 });
+    return NextResponse.json({ detail: "Login fucking failed" }, { status: 500 });
   }
 }
 

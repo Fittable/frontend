@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+import { BACKEND_URL } from "@/lib/config";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${BACKEND_URL}/holidays/sync?year=${year}`, {
+    const res = await fetch(`${BACKEND_URL}/api/holidays/sync?year=${year}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
