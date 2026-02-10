@@ -178,8 +178,49 @@ export default function CalendarPage() {
     return () => clearInterval(interval);
   }, [user, loadShifts]);
 
-  // Keyboard navigation
+  const handleLogout = async () => {
+    await api.logout();
+    router.push("/login");
+  };
+
+  const handlePrevMonth = () => {
+    setWorkMonth(getPrevWorkMonth(workMonth));
+  };
+
+  const handleNextMonth = () => {
+    setWorkMonth(getNextWorkMonth(workMonth));
+  };
+
+  const handlePrevWeek = () => {
+    const anchor = selectedDate
+      ? new Date(selectedDate + "T12:00:00")
+      : new Date();
+    const prev = new Date(anchor);
+    prev.setDate(prev.getDate() - 7);
+    setSelectedDate(formatDateStr(prev));
+    setWorkMonth(getWorkMonth(prev));
+  };
+
+  const handleNextWeek = () => {
+    const anchor = selectedDate
+      ? new Date(selectedDate + "T12:00:00")
+      : new Date();
+    const next = new Date(anchor);
+    next.setDate(next.getDate() + 7);
+    setSelectedDate(formatDateStr(next));
+    setWorkMonth(getWorkMonth(next));
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setWorkMonth(getWorkMonth(today));
+    setSelectedDate(formatDateStr(today));
+  };
+
+  // Keyboard navigation (arrows respect month vs week view)
   useEffect(() => {
+    const handlePrev = viewMode === "week" ? handlePrevWeek : handlePrevMonth;
+    const handleNext = viewMode === "week" ? handleNextWeek : handleNextMonth;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
@@ -187,10 +228,10 @@ export default function CalendarPage() {
 
       switch (e.key) {
         case "ArrowLeft":
-          handlePrevMonth();
+          handlePrev();
           break;
         case "ArrowRight":
-          handleNextMonth();
+          handleNext();
           break;
         case "t":
         case "T":
@@ -205,26 +246,7 @@ export default function CalendarPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [workMonth]);
-
-  const handleLogout = async () => {
-    await api.logout();
-    router.push("/login");
-  };
-
-  const handlePrevMonth = () => {
-    setWorkMonth(getPrevWorkMonth(workMonth));
-  };
-
-  const handleNextMonth = () => {
-    setWorkMonth(getNextWorkMonth(workMonth));
-  };
-
-  const handleToday = () => {
-    const today = new Date();
-    setWorkMonth(getWorkMonth(today));
-    setSelectedDate(formatDateStr(today));
-  };
+  }, [viewMode, workMonth, selectedDate]);
 
   const handleDateSelect = (date: Date) => {
     // Navigate to the work month containing this date
@@ -341,8 +363,8 @@ export default function CalendarPage() {
           viewScope={viewScope}
           onViewModeChange={setViewMode}
           onViewScopeChange={setViewScope}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
+          onPrevMonth={viewMode === "week" ? handlePrevWeek : handlePrevMonth}
+          onNextMonth={viewMode === "week" ? handleNextWeek : handleNextMonth}
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
