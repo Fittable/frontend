@@ -59,7 +59,7 @@ export default function Sidebar({
   const [userHours, setUserHours] = useState<Record<string, number>>({});
 
   // Fetch hours for the current work month (25th to 24th)
-  // Re-fetch when shifts change (after create/update/delete)
+  // Re-fetch when shifts change (after create/update/delete); depend on shifts so edits (same length) also trigger refetch
   useEffect(() => {
     const fetchHours = async () => {
       try {
@@ -80,7 +80,7 @@ export default function Sidebar({
     };
 
     fetchHours();
-  }, [workMonth, shifts.length]);
+  }, [workMonth, shifts]);
 
   const handleAllWorkersToggle = () => {
     onWorkerFilterChange([]);
