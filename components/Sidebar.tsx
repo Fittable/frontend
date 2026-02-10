@@ -5,6 +5,7 @@ import { User, Shift } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
+import ProfileCard from "./ProfileCard";
 import { t, Language } from "@/lib/i18n";
 import styles from "./Sidebar.module.css";
 
@@ -58,6 +59,7 @@ export default function Sidebar({
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
   const [profileImageError, setProfileImageError] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
 
   // Fetch hours for the current work month (25th to 24th)
   // Re-fetch when shifts change (after create/update/delete); depend on shifts so edits (same length) also trigger refetch
@@ -186,7 +188,18 @@ export default function Sidebar({
                 )}
               </div>
               <div className={styles.userDetails}>
-                <span className={styles.userName}>{user.name || user.student_id}</span>
+                <div className={styles.userNameRow}>
+                  <span className={styles.userName}>{user.name || user.student_id}</span>
+                  <button
+                    type="button"
+                    className={styles.settingsButton}
+                    onClick={() => setShowProfileCard(true)}
+                    aria-label={t(language, "profile.settings")}
+                    title={t(language, "profile.settings")}
+                  >
+                    <SettingsIcon />
+                  </button>
+                </div>
                 <span className={styles.userRole}>{user.role}</span>
               </div>
             </div>
@@ -217,7 +230,23 @@ export default function Sidebar({
           </button>
         </div>
       </aside>
+
+      {showProfileCard && (
+        <ProfileCard
+          language={language}
+          onClose={() => setShowProfileCard(false)}
+        />
+      )}
     </>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
   );
 }
 

@@ -146,11 +146,36 @@
 .userDetails {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.userNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .userName {
   font-size: 13px;
   font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+}
+
+.settingsButton {
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.settingsButton:hover {
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 

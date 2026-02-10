@@ -53,7 +53,23 @@ export type TranslationKey =
   | "login.signingIn"
   | "login.demoCredentials"
   | "login.adminLabel"
-  | "login.workerLabel";
+  | "login.workerLabel"
+  // Profile / settings
+  | "profile.settings"
+  | "profile.name"
+  | "profile.studentId"
+  | "profile.major"
+  | "profile.dateOfBirth"
+  | "profile.gender"
+  | "profile.nationality"
+  | "profile.roomNo"
+  | "profile.nickname"
+  | "profile.deptName"
+  | "profile.workCategory"
+  | "profile.save"
+  | "profile.saving"
+  | "profile.loading"
+  | "profile.close";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   ko: {
@@ -114,6 +130,23 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "login.demoCredentials": "데모 계정",
     "login.adminLabel": "관리자",
     "login.workerLabel": "근로학생",
+
+    // Profile / settings
+    "profile.settings": "설정",
+    "profile.name": "이름",
+    "profile.studentId": "학번",
+    "profile.major": "전공",
+    "profile.dateOfBirth": "생년월일",
+    "profile.gender": "성별",
+    "profile.nationality": "국적",
+    "profile.roomNo": "사무실",
+    "profile.nickname": "닉네임",
+    "profile.deptName": "대학",
+    "profile.workCategory": "구분",
+    "profile.save": "저장",
+    "profile.saving": "저장 중...",
+    "profile.loading": "불러오는 중...",
+    "profile.close": "닫기",
   },
   en: {
     // Common
@@ -173,6 +206,23 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "login.demoCredentials": "Demo credentials",
     "login.adminLabel": "Admin:",
     "login.workerLabel": "Worker:",
+
+    // Profile / settings
+    "profile.settings": "Settings",
+    "profile.name": "Name",
+    "profile.studentId": "Student ID",
+    "profile.major": "Major",
+    "profile.dateOfBirth": "Date of birth",
+    "profile.gender": "Gender",
+    "profile.nationality": "Nationality",
+    "profile.roomNo": "Office",
+    "profile.nickname": "Nickname",
+    "profile.deptName": "Department",
+    "profile.workCategory": "Category",
+    "profile.save": "Save",
+    "profile.saving": "Saving...",
+    "profile.loading": "Loading...",
+    "profile.close": "Close",
   },
 };
 

@@ -13,6 +13,8 @@ import {
   HolidaysResponse,
   SyncResponse,
   TimetableResponse,
+  ProfileSettings,
+  ProfileSettingsUpdate,
 } from "./types";
 
 const API_BASE = "/api";
@@ -138,5 +140,14 @@ export const api = {
   // Timetable (courses)
   getTimetable: (year: number, semester: number) =>
     fetchApi<TimetableResponse>(`/timetable?year=${year}&semester=${semester}`),
+
+  // Profile settings
+  getProfileSettings: () => fetchApi<ProfileSettings>("/profile/settings"),
+
+  updateProfileSettings: (data: ProfileSettingsUpdate) =>
+    fetchApi<ProfileSettings>("/profile/settings", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
 };
 

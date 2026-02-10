@@ -149,3 +149,26 @@ export interface CourseEvent {
   location: string;
   professor: string;
 }
+
+/** Profile settings from GET /api/profile/settings */
+export interface ProfileSettings {
+  name: string | null;
+  student_id: string;
+  major: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  nationality: string | null;
+  profile_image: string | null;
+  room_no: string | null;
+  nickname: string | null;
+  dept_name: string | null;
+  work_category: string | null;
+}
+
+/** Editable fields for PATCH /api/profile/settings */
+export interface ProfileSettingsUpdate {
+  room_no?: string | null;
+  nickname?: string | null;
+  dept_name?: string | null;
+  work_category?: string | null;
+}

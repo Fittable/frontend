@@ -1,0 +1,222 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
+import { ProfileSettings, ProfileSettingsUpdate } from "@/lib/types";
+import { t, Language } from "@/lib/i18n";
+import styles from "./ProfileCard.module.css";
+
+interface ProfileCardProps {
+  language: Language;
+  onClose: () => void;
+  onProfileUpdated?: (profile: ProfileSettings) => void;
+}
+
+export default function ProfileCard({
+  language,
+  onClose,
+  onProfileUpdated,
+}: ProfileCardProps) {
+  const [profile, setProfile] = useState<ProfileSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [roomNo, setRoomNo] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [deptName, setDeptName] = useState("");
+  const [workCategory, setWorkCategory] = useState("");
+
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.getProfileSettings();
+      setProfile(data);
+      setRoomNo(data.room_no ?? "");
+      setNickname(data.nickname ?? "");
+      setDeptName(data.dept_name ?? "");
+      setWorkCategory(data.work_category ?? "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleSave = async () => {
+    if (!profile) return;
+    setSaving(true);
+    setSaveError(null);
+    const payload: ProfileSettingsUpdate = {
+      room_no: roomNo || null,
+      nickname: nickname || null,
+      dept_name: deptName || null,
+      work_category: workCategory || null,
+    };
+    try {
+      const updated = await api.updateProfileSettings(payload);
+      setProfile(updated);
+      onProfileUpdated?.(updated);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  if (loading) {
+    return (
+      <>
+        <div className={styles.overlay} onClick={handleOverlayClick} aria-hidden />
+        <div className={styles.card} role="dialog" aria-label={t(language, "profile.settings")}>
+          <div className={styles.loading}>{t(language, "profile.loading")}</div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <div className={styles.overlay} onClick={handleOverlayClick} aria-hidden />
+        <div className={styles.card} role="dialog" aria-label={t(language, "profile.settings")}>
+          <div className={styles.header}>
+            <h2 className={styles.title}>{t(language, "profile.settings")}</h2>
+            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t(language, "profile.close")}>
+              <CloseIcon />
+            </button>
+          </div>
+          <div className={styles.error}>{error}</div>
+          <div className={styles.actions}>
+            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+              {t(language, "profile.close")}
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className={styles.overlay} onClick={handleOverlayClick} aria-hidden />
+      <div className={styles.card} role="dialog" aria-label={t(language, "profile.settings")}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>{t(language, "profile.settings")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t(language, "profile.close")}>
+            <CloseIcon />
+          </button>
+        </div>
+
+        <div className={styles.body}>
+          <div className={styles.avatarRow}>
+            <div className={styles.avatar}>
+              {(profile?.name || profile?.student_id || "?").charAt(0).toUpperCase()}
+            </div>
+            <div className={styles.row} style={{ flex: 1 }}>
+              <span className={styles.label}>{t(language, "profile.name")}</span>
+              <span className={styles.value}>{profile?.name ?? "—"}</span>
+            </div>
+          </div>
+
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.studentId")}</span>
+            <span className={styles.value}>{profile?.student_id ?? "—"}</span>
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.major")}</span>
+            <span className={styles.value}>{profile?.major ?? "—"}</span>
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.dateOfBirth")}</span>
+            <span className={styles.value}>{profile?.date_of_birth ?? "—"}</span>
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.gender")}</span>
+            <span className={styles.value}>{profile?.gender ?? "—"}</span>
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.nationality")}</span>
+            <span className={styles.value}>{profile?.nationality ?? "—"}</span>
+          </div>
+
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.roomNo")}</span>
+            <input
+              type="text"
+              className={styles.input}
+              value={roomNo}
+              onChange={(e) => setRoomNo(e.target.value)}
+              placeholder={t(language, "profile.roomNo")}
+            />
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.nickname")}</span>
+            <input
+              type="text"
+              className={styles.input}
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder={t(language, "profile.nickname")}
+            />
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.deptName")}</span>
+            <input
+              type="text"
+              className={styles.input}
+              value={deptName}
+              onChange={(e) => setDeptName(e.target.value)}
+              placeholder={t(language, "profile.deptName")}
+            />
+          </div>
+          <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.workCategory")}</span>
+            <input
+              type="text"
+              className={styles.input}
+              value={workCategory}
+              onChange={(e) => setWorkCategory(e.target.value)}
+              placeholder={t(language, "profile.workCategory")}
+            />
+          </div>
+
+          {saveError && <div className={styles.error} style={{ marginTop: 12 }}>{saveError}</div>}
+
+          <div className={styles.actions}>
+            <button type="button" className={styles.cancelBtn} onClick={onClose} disabled={saving}>
+              {t(language, "profile.close")}
+            </button>
+            <button
+              type="button"
+              className={styles.saveBtn}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? t(language, "profile.saving") : t(language, "profile.save")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
