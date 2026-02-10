@@ -127,6 +127,16 @@ export default function CalendarPage() {
     }
   }, [user, loadShifts, loadHolidays]);
 
+  // Poll shifts so other users' changes appear without refresh
+  useEffect(() => {
+    if (!user) return;
+    const intervalMs = 1_000; // 30 seconds
+    const interval = setInterval(() => {
+      loadShifts();
+    }, intervalMs);
+    return () => clearInterval(interval);
+  }, [user, loadShifts]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
