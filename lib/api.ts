@@ -12,6 +12,7 @@ import {
   HolidayUpdate,
   HolidaysResponse,
   SyncResponse,
+  TimetableResponse,
 } from "./types";
 
 const API_BASE = "/api";
@@ -133,5 +134,9 @@ export const api = {
     fetchApi<SyncResponse>(`/holidays/sync?year=${year}`, {
       method: "POST",
     }),
+
+  // Timetable (courses)
+  getTimetable: (year: number, semester: number) =>
+    fetchApi<TimetableResponse>(`/timetable?year=${year}&semester=${semester}`),
 };
 

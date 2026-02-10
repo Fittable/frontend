@@ -3,15 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { User, UserMe, Shift, Holiday } from "@/lib/types";
+import { User, UserMe, Shift, Holiday, TimetableResponse, CourseEvent } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonth,
   getNextWorkMonth,
   getPrevWorkMonth,
   getMonthsToFetch,
+  getWorkMonthStartDate,
+  getWorkMonthEndDate,
   formatDateStr,
 } from "@/lib/workMonth";
+import {
+  timetableToCourseEvents,
+  getSemesterFromDate,
+} from "@/lib/timetable";
 import Sidebar from "@/components/Sidebar";
 import CalendarHeader from "@/components/CalendarHeader";
 import CalendarGrid from "@/components/CalendarGrid";
@@ -35,6 +41,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [timetable, setTimetable] = useState<TimetableResponse | null>(null);
 
   const loadShifts = useCallback(async () => {
     try {
@@ -81,6 +88,38 @@ export default function CalendarPage() {
     }
   }, [workMonth.startYear, workMonth.endYear]);
 
+  const loadTimetable = useCallback(async () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const semester = getSemesterFromDate(now);
+
+    const hasCourses = (data: TimetableResponse | null) =>
+      data?.success && data.courses && Object.keys(data.courses).length > 0;
+
+    // Try current semester first, then previous if missing or empty
+    const tryFetch = async (y: number, s: number): Promise<TimetableResponse | null> => {
+      try {
+        return await api.getTimetable(y, s);
+      } catch {
+        return null;
+      }
+    };
+
+    let data = await tryFetch(year, semester);
+    if (!hasCourses(data) && data !== null) {
+      data = null; // treat empty response as "try fallback"
+    }
+    if (!hasCourses(data)) {
+      const [prevYear, prevSemester] =
+        semester === 1 ? [year - 1, 2] : [year, 1];
+      const fallback = await tryFetch(prevYear, prevSemester);
+      if (hasCourses(fallback)) {
+        data = fallback;
+      }
+    }
+    setTimetable(data);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     
@@ -124,13 +163,14 @@ export default function CalendarPage() {
     if (user) {
       loadShifts();
       loadHolidays();
+      loadTimetable();
     }
-  }, [user, loadShifts, loadHolidays]);
+  }, [user, loadShifts, loadHolidays, loadTimetable]);
 
   // Poll shifts so other users' changes appear without refresh
   useEffect(() => {
     if (!user) return;
-    const intervalMs = 1_000; // 30 seconds
+    const intervalMs = 30_000; // 30 seconds
     const interval = setInterval(() => {
       loadShifts();
     }, intervalMs);
@@ -241,6 +281,16 @@ export default function CalendarPage() {
     ? shifts
     : shifts.filter((s) => visibleWorkerIds.includes(s.user_id));
 
+  // Expand timetable to course events for the current work month range
+  const courseEvents: CourseEvent[] =
+    timetable?.success && timetable.courses
+      ? timetableToCourseEvents(
+          timetable,
+          getWorkMonthStartDate(workMonth),
+          getWorkMonthEndDate(workMonth)
+        )
+      : [];
+
   const shiftsForDate = selectedDate
     ? filteredShifts.filter((s) => s.date === selectedDate)
     : [];
@@ -297,6 +347,7 @@ export default function CalendarPage() {
               <CalendarGrid
                 workMonth={workMonth}
                 shifts={filteredShifts}
+                courseEvents={courseEvents}
                 users={users}
                 holidays={holidays}
                 selectedDate={selectedDate}
@@ -309,6 +360,7 @@ export default function CalendarPage() {
               <WeeklyCalendarGrid
                 workMonth={workMonth}
                 shifts={filteredShifts}
+                courseEvents={courseEvents}
                 users={users}
                 holidays={holidays}
                 selectedDate={selectedDate}

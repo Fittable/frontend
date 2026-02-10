@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User, Holiday } from "@/lib/types";
+import { Shift, User, Holiday, CourseEvent } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonthStartDate,
@@ -14,6 +14,7 @@ import styles from "./WeeklyCalendarGrid.module.css";
 interface WeeklyCalendarGridProps {
   workMonth: WorkMonth;
   shifts: Shift[];
+  courseEvents: CourseEvent[];
   users: User[];
   holidays: Holiday[];
   selectedDate: string | null;
@@ -36,6 +37,7 @@ function parseTimeToMinutes(time: string): number {
 export default function WeeklyCalendarGrid({
   workMonth,
   shifts,
+  courseEvents,
   users,
   holidays,
   selectedDate,
@@ -53,6 +55,16 @@ export default function WeeklyCalendarGrid({
   holidays.forEach((h) => {
     holidayMap.set(h.date, h);
   });
+
+  const courseEventsByDate = new Map<string, CourseEvent[]>();
+  courseEvents.forEach((ev) => {
+    const existing = courseEventsByDate.get(ev.date) || [];
+    existing.push(ev);
+    courseEventsByDate.set(ev.date, existing);
+  });
+  courseEventsByDate.forEach((list) =>
+    list.sort((a, b) => a.start_time.localeCompare(b.start_time))
+  );
 
   const workStart = getWorkMonthStartDate(workMonth);
   const workEnd = getWorkMonthEndDate(workMonth);
@@ -99,6 +111,15 @@ export default function WeeklyCalendarGrid({
       }
     });
     workersByDate.set(dateStr, ordered.length ? ordered : []);
+  });
+
+  const hasCoursesByDate = new Map<string, boolean>();
+  days.forEach((date) => {
+    const dateStr = formatDateStr(date);
+    hasCoursesByDate.set(
+      dateStr,
+      (courseEventsByDate.get(dateStr)?.length ?? 0) > 0
+    );
   });
 
   const todayStr = formatDateStr(new Date());
@@ -186,9 +207,19 @@ export default function WeeklyCalendarGrid({
           {days.map((date) => {
             const dateStr = formatDateStr(date);
             const dayShifts = shiftsByDate.get(dateStr) || [];
+            const dayCourses = courseEventsByDate.get(dateStr) || [];
             const workersOnDay = workersByDate.get(dateStr) || [];
+            const hasCourses = hasCoursesByDate.get(dateStr) ?? false;
             const inWorkMonth = date >= workStart && date <= workEnd;
-            const laneCount = Math.max(1, workersOnDay.length);
+            const laneCount = Math.max(
+              1,
+              workersOnDay.length + (hasCourses ? 1 : 0)
+            );
+
+            const laneItems: (string | null)[] = workersOnDay.length
+              ? [...workersOnDay]
+              : [null];
+            if (hasCourses) laneItems.push("__courses__");
 
             return (
               <div
@@ -205,57 +236,103 @@ export default function WeeklyCalendarGrid({
                     gridTemplateColumns: `repeat(${laneCount}, 1fr)`,
                   }}
                 >
-                  {(workersOnDay.length ? workersOnDay : [null]).map((userId, laneIdx) => {
-                    const laneShifts = userId
-                      ? dayShifts.filter((s) => s.user_id === userId)
+                  {laneItems.map((laneId) => {
+                    const isCourseLane = laneId === "__courses__";
+                    const laneShifts = laneId && !isCourseLane
+                      ? dayShifts.filter((s) => s.user_id === laneId)
                       : [];
 
                     return (
-                      <div key={userId ?? "empty"} className={styles.dayLane}>
+                      <div key={laneId ?? "empty"} className={styles.dayLane}>
                         <div className={styles.dayColumnGrid}>
                           {hours.map((h) => (
                             <div key={h} className={styles.timeSlotCell} />
                           ))}
-                          {laneShifts.map((shift) => {
-                            const startMinutes =
-                              parseTimeToMinutes(shift.start_time) - START_HOUR * 60;
-                            const endMinutes =
-                              parseTimeToMinutes(shift.end_time) - START_HOUR * 60;
-                            const top = Math.max(0, (startMinutes / totalMinutes) * 100);
-                            const bottom =
-                              100 - Math.max(0, Math.min(100, (endMinutes / totalMinutes) * 100));
-                            const height = Math.max(6, 100 - top - bottom);
-
-                            const color = getWorkerColor(userIndexMap.get(shift.user_id) ?? 0);
-
-                            return (
-                              <button
-                                key={shift.id}
-                                className={styles.shiftBlock}
-                                style={{
-                                  top: `${top}%`,
-                                  height: `${height}%`,
-                                  borderLeftColor: color,
-                                  backgroundColor: `${color}1A`,
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onShiftClick(shift);
-                                }}
-                                title={`${shift.name || "Unknown"} · ${shift.start_time.slice(
+                          {isCourseLane
+                            ? dayCourses.map((ev) => {
+                                const startMinutes =
+                                  parseTimeToMinutes(ev.start_time) -
+                                  START_HOUR * 60;
+                                const endMinutes =
+                                  parseTimeToMinutes(ev.end_time) -
+                                  START_HOUR * 60;
+                                const top = Math.max(
                                   0,
-                                  5
-                                )}–${shift.end_time.slice(0, 5)}`}
-                              >
-                                <span className={styles.shiftBlockTitle}>
-                                  {shift.name || "Unknown"}
-                                </span>
-                                <span className={styles.shiftBlockTime}>
-                                  {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
-                                </span>
-                              </button>
-                            );
-                          })}
+                                  (startMinutes / totalMinutes) * 100
+                                );
+                                const bottom =
+                                  100 -
+                                  Math.max(
+                                    0,
+                                    Math.min(
+                                      100,
+                                      (endMinutes / totalMinutes) * 100
+                                    )
+                                  );
+                                const height = Math.max(
+                                  6,
+                                  100 - top - bottom
+                                );
+                                return (
+                                  <div
+                                    key={`${ev.course_code}-${ev.start_time}`}
+                                    className={styles.courseBlock}
+                                    style={{
+                                      top: `${top}%`,
+                                      height: `${height}%`,
+                                    }}
+                                    title={`${ev.course_title} · ${ev.start_time.slice(0, 5)}–${ev.end_time.slice(0, 5)} · ${ev.location}`}
+                                  >
+                                    <span className={styles.courseBlockTitle}>
+                                      {ev.course_title}
+                                    </span>
+                                    <span className={styles.courseBlockTime}>
+                                      {ev.start_time.slice(0, 5)} –{" "}
+                                      {ev.end_time.slice(0, 5)}
+                                    </span>
+                                  </div>
+                                );
+                              })
+                            : laneShifts.map((shift) => {
+                                const startMinutes =
+                                  parseTimeToMinutes(shift.start_time) - START_HOUR * 60;
+                                const endMinutes =
+                                  parseTimeToMinutes(shift.end_time) - START_HOUR * 60;
+                                const top = Math.max(0, (startMinutes / totalMinutes) * 100);
+                                const bottom =
+                                  100 - Math.max(0, Math.min(100, (endMinutes / totalMinutes) * 100));
+                                const height = Math.max(6, 100 - top - bottom);
+
+                                const color = getWorkerColor(userIndexMap.get(shift.user_id) ?? 0);
+
+                                return (
+                                  <button
+                                    key={shift.id}
+                                    className={styles.shiftBlock}
+                                    style={{
+                                      top: `${top}%`,
+                                      height: `${height}%`,
+                                      borderLeftColor: color,
+                                      backgroundColor: `${color}1A`,
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onShiftClick(shift);
+                                    }}
+                                    title={`${shift.name || "Unknown"} · ${shift.start_time.slice(
+                                      0,
+                                      5
+                                    )}–${shift.end_time.slice(0, 5)}`}
+                                  >
+                                    <span className={styles.shiftBlockTitle}>
+                                      {shift.name || "Unknown"}
+                                    </span>
+                                    <span className={styles.shiftBlockTime}>
+                                      {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
+                                    </span>
+                                  </button>
+                                );
+                              })}
                         </div>
                       </div>
                     );

@@ -197,6 +197,34 @@
   color: var(--text-muted);
 }
 
+/* Course (timetable) block in week view */
+.courseBlock {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 6px;
+  border-left: 3px solid #2563eb;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.14);
+  pointer-events: none;
+}
+
+.courseBlockTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.courseBlockTime {
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .headerRow {

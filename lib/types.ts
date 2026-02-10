@@ -116,3 +116,36 @@ export interface UserMe {
   role: string;
   status: string;
 }
+
+/** Timetable: course schedule from KLAS / backend */
+export interface TimetableSchedule {
+  day: string;
+  day_num: number;
+  start_time: string;
+  end_time: string;
+  location: string;
+  professor: string;
+}
+
+export interface TimetableCourse {
+  course_title: string;
+  course_code: string;
+  schedules: TimetableSchedule[];
+}
+
+export interface TimetableResponse {
+  success: boolean;
+  courses: Record<string, TimetableCourse>;
+  message: string | null;
+}
+
+/** One course occurrence on a specific date (for calendar display) */
+export interface CourseEvent {
+  date: string;
+  start_time: string;
+  end_time: string;
+  course_title: string;
+  course_code: string;
+  location: string;
+  professor: string;
+}

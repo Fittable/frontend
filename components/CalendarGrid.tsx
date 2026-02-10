@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User, Holiday } from "@/lib/types";
+import { Shift, User, Holiday, CourseEvent } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonthStartDate,
@@ -14,6 +14,7 @@ import styles from "./CalendarGrid.module.css";
 interface CalendarGridProps {
   workMonth: WorkMonth;
   shifts: Shift[];
+  courseEvents: CourseEvent[];
   users: User[];
   holidays: Holiday[];
   selectedDate: string | null;
@@ -58,6 +59,7 @@ const MAX_VISIBLE_USERS = 6;
 export default function CalendarGrid({
   workMonth,
   shifts,
+  courseEvents,
   users,
   holidays,
   selectedDate,
@@ -77,6 +79,17 @@ export default function CalendarGrid({
   holidays.forEach((h) => {
     holidayMap.set(h.date, h);
   });
+
+  // Group course events by date
+  const courseEventsByDate = new Map<string, CourseEvent[]>();
+  courseEvents.forEach((ev) => {
+    const existing = courseEventsByDate.get(ev.date) || [];
+    existing.push(ev);
+    courseEventsByDate.set(ev.date, existing);
+  });
+  courseEventsByDate.forEach((list) =>
+    list.sort((a, b) => a.start_time.localeCompare(b.start_time))
+  );
 
   // Get start and end dates for the work month
   const startDate = getWorkMonthStartDate(workMonth);
@@ -153,6 +166,7 @@ export default function CalendarGrid({
         {dates.map((date, idx) => {
           const dateStr = formatDateStr(date);
           const dayShifts = shiftsByDate.get(dateStr) || [];
+          const dayCourses = courseEventsByDate.get(dateStr) || [];
           const groupedShifts = groupShiftsByUser(dayShifts);
           const isSelected = dateStr === selectedDate;
           const isToday = dateStr === todayStr;
@@ -205,6 +219,17 @@ export default function CalendarGrid({
               )}
 
               <div className={styles.shiftsContainer}>
+                {dayCourses.map((ev) => (
+                  <div
+                    key={`${ev.date}-${ev.course_code}-${ev.start_time}`}
+                    className={styles.courseBar}
+                    title={`${ev.course_title} · ${ev.start_time.slice(0, 5)}–${ev.end_time.slice(0, 5)} · ${ev.location}`}
+                  >
+                    <span className={styles.courseBarText}>
+                      {ev.course_title} · {formatTime(ev.start_time)}–{formatTime(ev.end_time)}
+                    </span>
+                  </div>
+                ))}
                 {visibleUsers.map((userShifts) => {
                   const userIdx = userIndexMap.get(userShifts.userId) ?? 0;
                   const color = getWorkerColor(userIdx);
