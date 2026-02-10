@@ -69,8 +69,9 @@ export default function WeeklyCalendarGrid({
   const weekStart = new Date(anchorDate);
   weekStart.setDate(weekStart.getDate() + offsetToMonday);
 
+  // Week view: Mon–Fri only (no Saturday/Sunday)
   const days: Date[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 5; i++) {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
     days.push(d);
@@ -82,6 +83,22 @@ export default function WeeklyCalendarGrid({
     const existing = shiftsByDate.get(shift.date) || [];
     existing.push(shift);
     shiftsByDate.set(shift.date, existing);
+  });
+
+  // For each date, ordered list of user_ids that have at least one shift (order = users order)
+  const workersByDate = new Map<string, string[]>();
+  days.forEach((date) => {
+    const dateStr = formatDateStr(date);
+    const dayShifts = shiftsByDate.get(dateStr) || [];
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    users.forEach((u) => {
+      if (dayShifts.some((s) => s.user_id === u.id) && !seen.has(u.id)) {
+        seen.add(u.id);
+        ordered.push(u.id);
+      }
+    });
+    workersByDate.set(dateStr, ordered.length ? ordered : []);
   });
 
   const todayStr = formatDateStr(new Date());
@@ -125,8 +142,8 @@ export default function WeeklyCalendarGrid({
               <div className={styles.dayHeaderLabel}>
                 <span className={styles.dayName}>
                   {language === "ko"
-                    ? ["월", "화", "수", "목", "금", "토", "일"][idx]
-                    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][idx]}
+                    ? ["월", "화", "수", "목", "금"][idx]
+                    : ["Mon", "Tue", "Wed", "Thu", "Fri"][idx]}
                 </span>
                 <span
                   className={`${styles.dayNumber} ${
@@ -164,12 +181,14 @@ export default function WeeklyCalendarGrid({
           ))}
         </div>
 
-        {/* Day columns */}
+        {/* Day columns: each day split into worker lanes (side-by-side) */}
         <div className={styles.weekColumns}>
           {days.map((date) => {
             const dateStr = formatDateStr(date);
             const dayShifts = shiftsByDate.get(dateStr) || [];
+            const workersOnDay = workersByDate.get(dateStr) || [];
             const inWorkMonth = date >= workStart && date <= workEnd;
+            const laneCount = Math.max(1, workersOnDay.length);
 
             return (
               <div
@@ -180,49 +199,65 @@ export default function WeeklyCalendarGrid({
                 onClick={() => onDayClick(dateStr)}
                 onDoubleClick={() => onDayDoubleClick(dateStr)}
               >
-                <div className={styles.dayColumnGrid}>
-                  {hours.map((h) => (
-                    <div key={h} className={styles.timeSlotCell} />
-                  ))}
-                  {dayShifts.map((shift) => {
-                    const startMinutes =
-                      parseTimeToMinutes(shift.start_time) - START_HOUR * 60;
-                    const endMinutes =
-                      parseTimeToMinutes(shift.end_time) - START_HOUR * 60;
-                    const top = Math.max(0, (startMinutes / totalMinutes) * 100);
-                    const bottom =
-                      100 - Math.max(0, Math.min(100, (endMinutes / totalMinutes) * 100));
-                    const height = Math.max(6, 100 - top - bottom);
-
-                    const userIdx = userIndexMap.get(shift.user_id) ?? 0;
-                    const color = getWorkerColor(userIdx);
+                <div
+                  className={styles.dayColumnLanes}
+                  style={{
+                    gridTemplateColumns: `repeat(${laneCount}, 1fr)`,
+                  }}
+                >
+                  {(workersOnDay.length ? workersOnDay : [null]).map((userId, laneIdx) => {
+                    const laneShifts = userId
+                      ? dayShifts.filter((s) => s.user_id === userId)
+                      : [];
 
                     return (
-                      <button
-                        key={shift.id}
-                        className={styles.shiftBlock}
-                        style={{
-                          top: `${top}%`,
-                          height: `${height}%`,
-                          borderLeftColor: color,
-                          backgroundColor: `${color}1A`,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onShiftClick(shift);
-                        }}
-                        title={`${shift.name || "Unknown"} · ${shift.start_time.slice(
-                          0,
-                          5
-                        )}–${shift.end_time.slice(0, 5)}`}
-                      >
-                        <span className={styles.shiftBlockTitle}>
-                          {shift.name || "Unknown"}
-                        </span>
-                        <span className={styles.shiftBlockTime}>
-                          {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
-                        </span>
-                      </button>
+                      <div key={userId ?? "empty"} className={styles.dayLane}>
+                        <div className={styles.dayColumnGrid}>
+                          {hours.map((h) => (
+                            <div key={h} className={styles.timeSlotCell} />
+                          ))}
+                          {laneShifts.map((shift) => {
+                            const startMinutes =
+                              parseTimeToMinutes(shift.start_time) - START_HOUR * 60;
+                            const endMinutes =
+                              parseTimeToMinutes(shift.end_time) - START_HOUR * 60;
+                            const top = Math.max(0, (startMinutes / totalMinutes) * 100);
+                            const bottom =
+                              100 - Math.max(0, Math.min(100, (endMinutes / totalMinutes) * 100));
+                            const height = Math.max(6, 100 - top - bottom);
+
+                            const color = getWorkerColor(userIndexMap.get(shift.user_id) ?? 0);
+
+                            return (
+                              <button
+                                key={shift.id}
+                                className={styles.shiftBlock}
+                                style={{
+                                  top: `${top}%`,
+                                  height: `${height}%`,
+                                  borderLeftColor: color,
+                                  backgroundColor: `${color}1A`,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onShiftClick(shift);
+                                }}
+                                title={`${shift.name || "Unknown"} · ${shift.start_time.slice(
+                                  0,
+                                  5
+                                )}–${shift.end_time.slice(0, 5)}`}
+                              >
+                                <span className={styles.shiftBlockTitle}>
+                                  {shift.name || "Unknown"}
+                                </span>
+                                <span className={styles.shiftBlockTime}>
+                                  {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
