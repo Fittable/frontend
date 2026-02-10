@@ -248,12 +248,15 @@ export default function ShiftEditorModal({
   };
 
   const formattedDate = date
-    ? new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
+    ? new Date(date + "T00:00:00").toLocaleDateString(
+        language === "ko" ? "ko-KR" : "en-US",
+        {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }
+      )
     : "";
 
   const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
@@ -355,7 +358,7 @@ export default function ShiftEditorModal({
               >
                 <span className={styles.checkbox}>{morningSelected ? "✓" : ""}</span>
                 <div className={styles.shiftInfo}>
-                  <span className={styles.shiftName}>Morning</span>
+                  <span className={styles.shiftName}>{t(language, "shifts.morning")}</span>
                   <span className={styles.shiftTime}>{times.morning.start} – {times.morning.end}</span>
                 </div>
               </button>
@@ -368,7 +371,7 @@ export default function ShiftEditorModal({
               >
                 <span className={styles.checkbox}>{eveningSelected ? "✓" : ""}</span>
                 <div className={styles.shiftInfo}>
-                  <span className={styles.shiftName}>Evening</span>
+                  <span className={styles.shiftName}>{t(language, "shifts.evening")}</span>
                   <span className={styles.shiftTime}>{times.evening.start} – {times.evening.end}</span>
                 </div>
               </button>
@@ -381,8 +384,8 @@ export default function ShiftEditorModal({
               >
                 <span className={styles.checkbox}>{isFullDay ? "✓" : ""}</span>
                 <div className={styles.shiftInfo}>
-                  <span className={styles.shiftName}>Full Day</span>
-                  <span className={styles.shiftTime}>Morning + Evening</span>
+                  <span className={styles.shiftName}>{t(language, "shifts.fullDay")}</span>
+                  <span className={styles.shiftTime}>{t(language, "shifts.fullDayDescription")}</span>
                 </div>
               </button>
 
@@ -394,8 +397,10 @@ export default function ShiftEditorModal({
               >
                 <span className={styles.checkbox}>{customSelected ? "✓" : ""}</span>
                 <div className={styles.shiftInfo}>
-                  <span className={styles.shiftName}>Custom</span>
-                  <span className={styles.shiftTime}>{customSelected ? `${customStart} – ${customEnd}` : "Add custom time"}</span>
+                  <span className={styles.shiftName}>{t(language, "shifts.custom")}</span>
+                  <span className={styles.shiftTime}>
+                    {customSelected ? `${customStart} – ${customEnd}` : t(language, "shifts.customTimeDescription")}
+                  </span>
                 </div>
               </button>
             </div>
@@ -413,7 +418,7 @@ export default function ShiftEditorModal({
                   className={styles.input}
                   required
                 />
-                <span className={styles.timeSeparator}>to</span>
+                <span className={styles.timeSeparator}>{t(language, "shifts.to")}</span>
                 <input
                   type="time"
                   value={customEnd}

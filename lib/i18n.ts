@@ -17,6 +17,12 @@ export type TranslationKey =
   | "shifts.addShort"
   | "shifts.editShiftTitle"
   | "shifts.newShiftTitle"
+  | "shifts.morning"
+  | "shifts.evening"
+  | "shifts.fullDay"
+  | "shifts.fullDayDescription"
+  | "shifts.custom"
+  | "shifts.customTimeDescription"
   | "shifts.date"
   | "shifts.assignTo"
   | "shifts.hours"
@@ -68,6 +74,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.addShort": "근무 추가",
     "shifts.editShiftTitle": "근무 수정",
     "shifts.newShiftTitle": "새 근무",
+    "shifts.morning": "오전",
+    "shifts.evening": "오후",
+    "shifts.fullDay": "종일",
+    "shifts.fullDayDescription": "오전 + 오후",
+    "shifts.custom": "직접 입력",
+    "shifts.customTimeDescription": "직접 시간 입력",
     "shifts.date": "날짜",
     "shifts.assignTo": "근무자",
     "shifts.hours": "근무 시간",
@@ -87,8 +99,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.edit": "수정",
 
     // Login
-    "login.title": "근로 스케줄러",
-    "login.subtitle": "근무 일정을 관리하려면 로그인하세요",
+    "login.title": "핏테이블",
+    "login.subtitle": "국제교류팀 근로학생을 위한 시간 관리 프렛폼",
     "login.studentIdLabel": "학번",
     "login.studentIdPlaceholder": "학번을 입력하세요",
     "login.passwordLabel": "비밀번호",
@@ -119,6 +131,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.addShort": "Add Shift",
     "shifts.editShiftTitle": "Edit Shift",
     "shifts.newShiftTitle": "New Shift",
+    "shifts.morning": "Morning",
+    "shifts.evening": "Evening",
+    "shifts.fullDay": "Full Day",
+    "shifts.fullDayDescription": "Morning + Evening",
+    "shifts.custom": "Custom",
+    "shifts.customTimeDescription": "Add custom time",
     "shifts.date": "Date",
     "shifts.assignTo": "Assign to",
     "shifts.hours": "Hours",
@@ -138,8 +156,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.edit": "Edit",
 
     // Login
-    "login.title": "Part-time Scheduler",
-    "login.subtitle": "Sign in to manage your shifts",
+    "login.title": "Fittable",
+    "login.subtitle": "Time manager for OIA students",
     "login.studentIdLabel": "Student ID",
     "login.studentIdPlaceholder": "Enter your student ID",
     "login.passwordLabel": "Password",
