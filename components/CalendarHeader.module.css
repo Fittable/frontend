@@ -40,7 +40,36 @@
 .right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.langToggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+}
+
+.langButton {
+  min-width: 28px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.langButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.langButtonActive {
+  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
+  color: var(--accent-text, #1d4ed8);
 }
 
 .viewToggle {
@@ -131,6 +160,10 @@
 
   .title {
     font-size: 16px;
+  }
+
+  .langToggle {
+    display: none;
   }
 
   .viewToggle {

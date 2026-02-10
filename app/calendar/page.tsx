@@ -28,6 +28,7 @@ export default function CalendarPage() {
   const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [visibleWorkerIds, setVisibleWorkerIds] = useState<string[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -254,12 +255,14 @@ export default function CalendarPage() {
         shifts={shifts}
         workMonth={workMonth}
         selectedDate={selectedDate}
+        language={language}
         visibleWorkerIds={visibleWorkerIds}
         onDateSelect={handleDateSelect}
         onWorkerFilterChange={setVisibleWorkerIds}
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onLanguageChange={setLanguage}
       />
 
       {/* Main Content */}
@@ -267,6 +270,7 @@ export default function CalendarPage() {
         {/* Header */}
         <CalendarHeader
           workMonth={workMonth}
+          language={language}
             viewMode={viewMode}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
@@ -286,6 +290,7 @@ export default function CalendarPage() {
                 users={users}
                 holidays={holidays}
                 selectedDate={selectedDate}
+                language={language}
                 onDayClick={handleDayClick}
                 onShiftClick={handleShiftClick}
                 onDayDoubleClick={handleDayDoubleClick}
@@ -297,6 +302,7 @@ export default function CalendarPage() {
                 users={users}
                 holidays={holidays}
                 selectedDate={selectedDate}
+                language={language}
                 onDayClick={handleDayClick}
                 onShiftClick={handleShiftClick}
                 onDayDoubleClick={handleDayDoubleClick}

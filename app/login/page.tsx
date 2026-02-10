@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { t, Language } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const language: Language = "ko";
 
   // Show error from redirect (e.g. session expired) — read from URL so it stays visible
   useEffect(() => {
@@ -53,12 +55,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <h1 className={styles.title}>Part-time Scheduler</h1>
-        <p className={styles.subtitle}>Sign in to manage your shifts</p>
+        <h1 className={styles.title}>{t(language, "login.title")}</h1>
+        <p className={styles.subtitle}>{t(language, "login.subtitle")}</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
-            <label className={styles.label}>Student ID</label>
+            <label className={styles.label}>{t(language, "login.studentIdLabel")}</label>
             <div className={styles.inputWrapper}>
               <UserIcon />
               <input
@@ -66,7 +68,7 @@ export default function LoginPage() {
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 className={styles.input}
-                placeholder="Enter your student ID"
+                placeholder={t(language, "login.studentIdPlaceholder")}
                 autoFocus
                 autoComplete="username"
               />
@@ -74,7 +76,7 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Password</label>
+            <label className={styles.label}>{t(language, "login.passwordLabel")}</label>
             <div className={styles.inputWrapper}>
               <LockIcon />
               <input
@@ -82,7 +84,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={styles.input}
-                placeholder="Enter your password"
+                placeholder={t(language, "login.passwordPlaceholder")}
                 required
                 autoComplete="current-password"
               />
@@ -100,25 +102,25 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <LoadingSpinner />
-                <span>Signing in...</span>
+                <span>{t(language, "login.signingIn")}</span>
               </>
             ) : (
-              <span>Sign In</span>
+              <span>{t(language, "login.signIn")}</span>
             )}
           </button>
         </form>
 
         <div className={styles.divider}>
-          <span>Demo credentials</span>
+          <span>{t(language, "login.demoCredentials")}</span>
         </div>
 
         <div className={styles.hints}>
           <div className={styles.hint}>
-            <span className={styles.hintRole}>Admin:</span>
+            <span className={styles.hintRole}>{t(language, "login.adminLabel")}</span>
             <code>admin / admin1234</code>
           </div>
           <div className={styles.hint}>
-            <span className={styles.hintRole}>Worker:</span>
+            <span className={styles.hintRole}>{t(language, "login.workerLabel")}</span>
             <code>worker1 / worker1234</code>
           </div>
         </div>
@@ -126,7 +128,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className={styles.footer}>
-        <span>Part-time Work Scheduler</span>
+        <span>Fittable</span>
       </footer>
     </div>
   );

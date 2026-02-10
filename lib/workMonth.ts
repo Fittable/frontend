@@ -97,6 +97,22 @@ export function getWorkMonthLabel(workMonth: WorkMonth, short: boolean = false):
   }
 }
 
+// Korean label: e.g. "2026년 1월 – 2월" or "2025년 12월 – 2026년 1월"
+export function getWorkMonthLabelKo(workMonth: WorkMonth, short: boolean = false): string {
+  const startMonth = workMonth.startMonth + 1;
+  const endMonth = workMonth.endMonth + 1;
+
+  if (workMonth.startYear === workMonth.endYear) {
+    // Same year – show year once at the front
+    const monthSeparator = short ? " - " : " – ";
+    return `${workMonth.startYear}년 ${startMonth}월${monthSeparator}${endMonth}월`;
+  }
+
+  // Cross-year range
+  const monthSeparator = short ? " - " : " – ";
+  return `${workMonth.startYear}년 ${startMonth}월${monthSeparator}${workMonth.endYear}년 ${endMonth}월`;
+}
+
 // Get all dates in a work month as an array
 export function getWorkMonthDates(workMonth: WorkMonth): Date[] {
   const dates: Date[] = [];

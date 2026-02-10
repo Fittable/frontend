@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Shift, User } from "@/lib/types";
+import { t, Language } from "@/lib/i18n";
 import styles from "./ShiftEditorModal.module.css";
 
 interface ShiftEditorModalProps {
@@ -11,6 +12,7 @@ interface ShiftEditorModalProps {
   users: User[];
   isAdmin: boolean;
   currentUserId: string;
+  language?: Language;
   onSave: () => void;
   onClose: () => void;
 }
@@ -33,6 +35,7 @@ export default function ShiftEditorModal({
   users,
   isAdmin,
   currentUserId,
+  language = "ko",
   onSave,
   onClose,
 }: ShiftEditorModalProps) {
@@ -223,7 +226,7 @@ export default function ShiftEditorModal({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {shift ? "Edit Shift" : "New Shift"}
+            {shift ? t(language, "shifts.editShiftTitle") : t(language, "shifts.newShiftTitle")}
           </h2>
           <button onClick={onClose} className={styles.closeButton} aria-label="Close">
             ×
@@ -233,14 +236,14 @@ export default function ShiftEditorModal({
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Date display */}
           <div className={styles.field}>
-            <label className={styles.label}>Date</label>
+            <label className={styles.label}>{t(language, "shifts.date")}</label>
             <div className={styles.dateDisplay}>{formattedDate}</div>
           </div>
 
           {/* Worker select (admin only) */}
           {isAdmin && users.length > 0 && (
             <div className={styles.field}>
-              <label className={styles.label}>Assign to</label>
+                <label className={styles.label}>{t(language, "shifts.assignTo")}</label>
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
@@ -257,21 +260,21 @@ export default function ShiftEditorModal({
 
           {/* Hours Mode */}
           <div className={styles.field}>
-            <label className={styles.label}>Hours</label>
+            <label className={styles.label}>{t(language, "shifts.hours")}</label>
             <div className={styles.toggleRow}>
               <button
                 type="button"
                 onClick={() => setVacationMode(false)}
                 className={`${styles.toggleBtn} ${!vacationMode ? styles.toggleActive : ""}`}
               >
-                Regular
+                {t(language, "shifts.modeRegular")}
               </button>
               <button
                 type="button"
                 onClick={() => setVacationMode(true)}
                 className={`${styles.toggleBtn} ${vacationMode ? styles.toggleActive : ""}`}
               >
-                Vacation
+                {t(language, "shifts.modeVacation")}
               </button>
             </div>
           </div>
@@ -279,7 +282,13 @@ export default function ShiftEditorModal({
           {/* Shift Selection - checkboxes style */}
           <div className={styles.field}>
             <label className={styles.label}>
-              Shift {!shift && shiftCount > 1 && <span className={styles.badge}>{shiftCount} shifts</span>}
+              {t(language, "shifts.sectionShift")}{" "}
+              {!shift && shiftCount > 1 && (
+                <span className={styles.badge}>{`${shiftCount} ${t(
+                  language,
+                  "shifts.sectionShift"
+                )}`}</span>
+              )}
             </label>
             <div className={styles.shiftOptions}>
               {/* Morning */}
@@ -339,7 +348,7 @@ export default function ShiftEditorModal({
           {/* Custom Time inputs - show when custom is selected */}
           {customSelected && (
             <div className={styles.field}>
-              <label className={styles.label}>Custom Time</label>
+              <label className={styles.label}>{t(language, "shifts.customTime")}</label>
               <div className={styles.timeRow}>
                 <input
                   type="time"
@@ -363,20 +372,22 @@ export default function ShiftEditorModal({
           {/* Time Summary */}
           <div className={styles.summary}>
             <span className={styles.summaryLabel}>
-              {!shift && shiftCount > 1 ? `Creating ${shiftCount} shifts:` : "Time:"}
+              {!shift && shiftCount > 1
+                ? `${t(language, "shifts.summaryCreatingPrefix")}`
+                : t(language, "shifts.summaryTimeLabel")}
             </span>
             <span className={styles.summaryValue}>{getTimeSummary()}</span>
           </div>
 
           {/* Note input */}
           <div className={styles.field}>
-            <label className={styles.label}>Note (optional)</label>
+            <label className={styles.label}>{t(language, "shifts.noteOptional")}</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className={styles.input}
-              placeholder="Add a note..."
+              placeholder={t(language, "shifts.notePlaceholder")}
             />
           </div>
 
@@ -386,10 +397,14 @@ export default function ShiftEditorModal({
           {/* Action buttons */}
           <div className={styles.actions}>
             <button type="button" onClick={onClose} className={styles.cancelButton}>
-              Cancel
+              {t(language, "shifts.cancel")}
             </button>
             <button type="submit" className={styles.saveButton} disabled={loading}>
-              {loading ? "Saving..." : shift ? "Update" : shiftCount > 1 ? `Create ${shiftCount} Shifts` : "Create"}
+              {loading
+                ? t(language, "shifts.saving")
+                : shift
+                ? t(language, "shifts.update")
+                : t(language, "shifts.create")}
             </button>
           </div>
         </form>

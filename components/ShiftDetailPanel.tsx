@@ -2,6 +2,7 @@
 
 import { Shift, User } from "@/lib/types";
 import { getWorkerColor } from "./Sidebar";
+import { t, Language } from "@/lib/i18n";
 import styles from "./ShiftDetailPanel.module.css";
 
 interface ShiftDetailPanelProps {
@@ -10,6 +11,7 @@ interface ShiftDetailPanelProps {
   users: User[];
   isAdmin: boolean;
   currentUserId: string;
+  language?: Language;
   onAddShift: () => void;
   onEditShift: (shift: Shift) => void;
   onDeleteShift: (shiftId: string) => void;
@@ -53,6 +55,7 @@ export default function ShiftDetailPanel({
   users,
   isAdmin,
   currentUserId,
+  language = "ko",
   onAddShift,
   onEditShift,
   onDeleteShift,
@@ -67,7 +70,7 @@ export default function ShiftDetailPanel({
   });
 
   const formattedDate = new Date(selectedDate + "T00:00:00").toLocaleDateString(
-    "en-US",
+    language === "ko" ? "ko-KR" : "en-US",
     { weekday: "long", month: "long", day: "numeric" }
   );
 
@@ -85,7 +88,11 @@ export default function ShiftDetailPanel({
         <div className={styles.headerContent}>
           <h2 className={styles.date}>{formattedDate}</h2>
           <span className={styles.shiftCount}>
-            {groupedShifts.length} {groupedShifts.length === 1 ? "person" : "people"}, {shifts.length} shift{shifts.length !== 1 ? "s" : ""}
+            {language === "ko"
+              ? `${groupedShifts.length}명, ${shifts.length}개 근무`
+              : `${groupedShifts.length} ${
+                  groupedShifts.length === 1 ? "person" : "people"
+                }, ${shifts.length} shift${shifts.length !== 1 ? "s" : ""}`}
           </span>
         </div>
         <button onClick={onClose} className={styles.closeButton} aria-label="Close panel">
@@ -96,9 +103,9 @@ export default function ShiftDetailPanel({
       <div className={styles.content}>
         {groupedShifts.length === 0 ? (
           <div className={styles.empty}>
-            <p>No shifts scheduled</p>
+            <p>{t(language, "shifts.none")}</p>
             <button onClick={onAddShift} className={styles.addButtonEmpty}>
-              Add a shift
+              {t(language, "shifts.add")}
             </button>
           </div>
         ) : (
@@ -166,7 +173,7 @@ export default function ShiftDetailPanel({
 
       <div className={styles.footer}>
         <button onClick={onAddShift} className={styles.addButton}>
-          + Add Shift
+          + {t(language, "shifts.addShort")}
         </button>
       </div>
     </div>

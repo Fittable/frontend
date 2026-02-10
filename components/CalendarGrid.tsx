@@ -7,6 +7,7 @@ import {
   getWorkMonthEndDate,
   formatDateStr,
 } from "@/lib/workMonth";
+import { Language } from "@/lib/i18n";
 import { getWorkerColor } from "./Sidebar";
 import styles from "./CalendarGrid.module.css";
 
@@ -16,6 +17,7 @@ interface CalendarGridProps {
   users: User[];
   holidays: Holiday[];
   selectedDate: string | null;
+  language: Language;
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
@@ -59,6 +61,7 @@ export default function CalendarGrid({
   users,
   holidays,
   selectedDate,
+  language,
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
@@ -115,7 +118,10 @@ export default function CalendarGrid({
   const todayStr = formatDateStr(today);
 
   // Weekday headers (Monday start)
-  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekDays =
+    language === "ko"
+      ? ["월", "화", "수", "목", "금", "토", "일"]
+      : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const formatTime = (time: string) => time.slice(0, 5);
 

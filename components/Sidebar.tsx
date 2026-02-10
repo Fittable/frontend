@@ -5,6 +5,7 @@ import { User, Shift } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
+import { t, Language } from "@/lib/i18n";
 import styles from "./Sidebar.module.css";
 
 // Worker color palette
@@ -29,12 +30,14 @@ interface SidebarProps {
   shifts: Shift[];
   workMonth: WorkMonth;
   selectedDate: string | null;
+  language: Language;
   visibleWorkerIds: string[];
   onDateSelect: (date: Date) => void;
   onWorkerFilterChange: (workerIds: string[]) => void;
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
+  onLanguageChange: (lang: "ko" | "en") => void;
 }
 
 export default function Sidebar({
@@ -43,12 +46,14 @@ export default function Sidebar({
   shifts,
   workMonth,
   selectedDate,
+  language,
   visibleWorkerIds,
   onDateSelect,
   onWorkerFilterChange,
   onLogout,
   isOpen,
   onClose,
+  onLanguageChange,
 }: SidebarProps) {
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
@@ -113,7 +118,7 @@ export default function Sidebar({
         {/* Worker Filter - Show for all users */}
         {workerList.length > 0 && (
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Workers</h3>
+            <h3 className={styles.sectionTitle}>{t(language, "sidebar.workers")}</h3>
             <div className={styles.filterList}>
               {/* All Workers option */}
               <label className={styles.filterItem}>
@@ -125,7 +130,9 @@ export default function Sidebar({
                   className={styles.filterRadio}
                 />
                 <span className={styles.filterDot} style={{ background: "var(--text-muted)" }} />
-                <span className={styles.filterLabel}>All Workers</span>
+                <span className={styles.filterLabel}>
+                  {t(language, "sidebar.allWorkers")}
+                </span>
               </label>
 
               {/* Individual workers */}
@@ -148,7 +155,7 @@ export default function Sidebar({
                       <span className={styles.hoursLabel}>{hours}h</span>
                     )}
                     {w.role === "admin" && (
-                      <span className={styles.adminBadge}>admin</span>
+                      <span className={styles.adminBadge}>{t(language, "common.admin")}</span>
                     )}
                   </label>
                 );
@@ -163,17 +170,39 @@ export default function Sidebar({
         {/* User Info */}
         <div className={styles.userSection}>
           <div className={styles.userInfo}>
-            <div className={styles.userAvatar}>
-              {(user.name || user.student_id).charAt(0).toUpperCase()}
+            <div className={styles.userMeta}>
+              <div className={styles.userAvatar}>
+                {(user.name || user.student_id).charAt(0).toUpperCase()}
+              </div>
+              <div className={styles.userDetails}>
+                <span className={styles.userName}>{user.name || user.student_id}</span>
+                <span className={styles.userRole}>{user.role}</span>
+              </div>
             </div>
-            <div className={styles.userDetails}>
-              <span className={styles.userName}>{user.name || user.student_id}</span>
-              <span className={styles.userRole}>{user.role}</span>
+            <div className={styles.langToggle} aria-label="Language">
+              <button
+                type="button"
+                className={`${styles.langButton} ${
+                  language === "ko" ? styles.langButtonActive : ""
+                }`}
+                onClick={() => onLanguageChange("ko")}
+              >
+                한
+              </button>
+              <button
+                type="button"
+                className={`${styles.langButton} ${
+                  language === "en" ? styles.langButtonActive : ""
+                }`}
+                onClick={() => onLanguageChange("en")}
+              >
+                En
+              </button>
             </div>
           </div>
           <button onClick={onLogout} className={styles.logoutButton}>
             <LogoutIcon />
-            <span>Log out</span>
+            <span>{t(language, "common.logout")}</span>
           </button>
         </div>
       </aside>

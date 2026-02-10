@@ -6,21 +6,25 @@ import {
   getWorkMonthStartDate,
   getWorkMonthEndDate,
   getWorkMonthLabel,
+  getWorkMonthLabelKo,
   getNextWorkMonth,
   getPrevWorkMonth,
   formatDateStr,
 } from "@/lib/workMonth";
+import { Language } from "@/lib/i18n";
 import styles from "./MiniCalendar.module.css";
 
 interface MiniCalendarProps {
   workMonth: WorkMonth;
   selectedDate: string | null;
+  language?: Language;
   onDateSelect: (date: Date) => void;
 }
 
 export default function MiniCalendar({
   workMonth,
   selectedDate,
+  language = "ko",
   onDateSelect,
 }: MiniCalendarProps) {
   const [viewMonth, setViewMonth] = useState(workMonth);
@@ -62,9 +66,11 @@ export default function MiniCalendar({
     onDateSelect(date);
   };
 
-  const monthLabel = getWorkMonthLabel(viewMonth, true);
+  const monthLabel =
+    language === "ko" ? getWorkMonthLabelKo(viewMonth, true) : getWorkMonthLabel(viewMonth, true);
 
-  const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
+  const weekDays =
+    language === "ko" ? ["월", "화", "수", "목", "금", "토", "일"] : ["M", "T", "W", "T", "F", "S", "S"];
 
   return (
     <div className={styles.container}>

@@ -7,6 +7,7 @@ import {
   getWorkMonthEndDate,
   formatDateStr,
 } from "@/lib/workMonth";
+import { Language } from "@/lib/i18n";
 import { getWorkerColor } from "./Sidebar";
 import styles from "./WeeklyCalendarGrid.module.css";
 
@@ -16,12 +17,11 @@ interface WeeklyCalendarGridProps {
   users: User[];
   holidays: Holiday[];
   selectedDate: string | null;
+  language: Language;
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
 }
-
-const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 // Time range for the vertical time axis (matches reference style roughly)
 const START_HOUR = 4; // 4 AM
@@ -39,6 +39,7 @@ export default function WeeklyCalendarGrid({
   users,
   holidays,
   selectedDate,
+  language,
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
@@ -86,7 +87,7 @@ export default function WeeklyCalendarGrid({
   const todayStr = formatDateStr(new Date());
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
 
-  const hours = [];
+  const hours: number[] = [];
   for (let h = START_HOUR; h <= END_HOUR; h++) {
     hours.push(h);
   }
@@ -122,7 +123,11 @@ export default function WeeklyCalendarGrid({
               onDoubleClick={() => onDayDoubleClick(dateStr)}
             >
               <div className={styles.dayHeaderLabel}>
-                <span className={styles.dayName}>{WEEK_DAYS[idx]}</span>
+                <span className={styles.dayName}>
+                  {language === "ko"
+                    ? ["월", "화", "수", "목", "금", "토", "일"][idx]
+                    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][idx]}
+                </span>
                 <span
                   className={`${styles.dayNumber} ${
                     isToday ? styles.dayNumberToday : ""

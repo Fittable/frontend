@@ -1,10 +1,12 @@
 "use client";
 
-import { WorkMonth, getWorkMonthLabel } from "@/lib/workMonth";
+import { WorkMonth, getWorkMonthLabel, getWorkMonthLabelKo } from "@/lib/workMonth";
+import { t, Language } from "@/lib/i18n";
 import styles from "./CalendarHeader.module.css";
 
 interface CalendarHeaderProps {
   workMonth: WorkMonth;
+  language: Language;
   viewMode: "month" | "week";
   onPrevMonth: () => void;
   onNextMonth: () => void;
@@ -15,6 +17,7 @@ interface CalendarHeaderProps {
 
 export default function CalendarHeader({
   workMonth,
+  language,
   viewMode,
   onPrevMonth,
   onNextMonth,
@@ -22,7 +25,8 @@ export default function CalendarHeader({
   onViewModeChange,
   onMenuToggle,
 }: CalendarHeaderProps) {
-  const monthLabel = getWorkMonthLabel(workMonth);
+  const monthLabel =
+    language === "ko" ? getWorkMonthLabelKo(workMonth) : getWorkMonthLabel(workMonth);
 
   return (
     <header className={styles.header}>
@@ -46,7 +50,7 @@ export default function CalendarHeader({
             }`}
             onClick={() => onViewModeChange("month")}
           >
-            Month
+            {t(language, "calendar.month")}
           </button>
           <button
             type="button"
@@ -55,13 +59,13 @@ export default function CalendarHeader({
             }`}
             onClick={() => onViewModeChange("week")}
           >
-            Week
+            {t(language, "calendar.week")}
           </button>
         </div>
 
         {/* Today button */}
         <button onClick={onToday} className={styles.todayButton}>
-          Today
+          {t(language, "calendar.today")}
         </button>
 
         {/* Navigation arrows */}
