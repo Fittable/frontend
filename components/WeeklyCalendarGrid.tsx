@@ -56,13 +56,11 @@ export default function WeeklyCalendarGrid({
   const workStart = getWorkMonthStartDate(workMonth);
   const workEnd = getWorkMonthEndDate(workMonth);
 
-  // Determine anchor date for the week: selected date if available, otherwise work month start
+  // Show the week containing selected date, or the current week (today) when none selected
   const anchorDate =
-    selectedDate != null ? new Date(selectedDate + "T00:00:00") : new Date(workStart);
-
-  // Clamp anchor inside work month
-  if (anchorDate < workStart) anchorDate.setTime(workStart.getTime());
-  if (anchorDate > workEnd) anchorDate.setTime(workEnd.getTime());
+    selectedDate != null
+      ? new Date(selectedDate + "T00:00:00")
+      : new Date();
 
   // Find Monday of the week that contains anchorDate (Mon = 0 ... Sun = 6)
   const anchorDay = anchorDate.getDay(); // 0=Sun
