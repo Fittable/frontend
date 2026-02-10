@@ -286,7 +286,7 @@ export default function CalendarPage() {
         : shifts.filter((s) => visibleWorkerIds.includes(s.user_id));
 
   // Expand timetable to course events for the current work month range
-  const courseEvents: CourseEvent[] =
+  const allCourseEvents: CourseEvent[] =
     timetable?.success && timetable.courses
       ? timetableToCourseEvents(
           timetable,
@@ -294,6 +294,8 @@ export default function CalendarPage() {
           getWorkMonthEndDate(workMonth)
         )
       : [];
+  // Show timetable only in "My schedule" view; hide when "All" is selected
+  const courseEvents: CourseEvent[] = viewScope === "me" ? allCourseEvents : [];
 
   const shiftsForDate = selectedDate
     ? filteredShifts.filter((s) => s.date === selectedDate)
