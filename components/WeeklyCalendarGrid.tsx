@@ -34,6 +34,41 @@ function parseTimeToMinutes(time: string): number {
   return Number(h) * 60 + Number(m || 0);
 }
 
+/** Two time ranges overlap if one starts before the other ends */
+function timeRangesOverlap(
+  start1: string,
+  end1: string,
+  start2: string,
+  end2: string
+): boolean {
+  const s1 = parseTimeToMinutes(start1);
+  const e1 = parseTimeToMinutes(end1);
+  const s2 = parseTimeToMinutes(start2);
+  const e2 = parseTimeToMinutes(end2);
+  return s1 < e2 && s2 < e1;
+}
+
+function dayHasOverlappingShiftAndCourse(
+  dayShifts: Shift[],
+  dayCourses: CourseEvent[]
+): boolean {
+  for (const shift of dayShifts) {
+    for (const course of dayCourses) {
+      if (
+        timeRangesOverlap(
+          shift.start_time,
+          shift.end_time,
+          course.start_time,
+          course.end_time
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export default function WeeklyCalendarGrid({
   workMonth,
   shifts,
@@ -211,12 +246,21 @@ export default function WeeklyCalendarGrid({
             const workersOnDay = workersByDate.get(dateStr) || [];
             const hasCourses = hasCoursesByDate.get(dateStr) ?? false;
             const inWorkMonth = date >= workStart && date <= workEnd;
+            const hasOverlap = dayHasOverlappingShiftAndCourse(dayShifts, dayCourses);
 
-            const laneItems: (string | null)[] = workersOnDay.length
-              ? [...workersOnDay]
-              : [null];
-            if (hasCourses) laneItems.push("__courses__");
-            const laneCount = laneItems.length;
+            // When work and timetable don't overlap: single full-width lane for both; otherwise split lanes
+            const useMergedLane =
+              !hasOverlap && (workersOnDay.length > 0 || hasCourses);
+
+            const laneItems: (string | null)[] = useMergedLane
+              ? ["__merged__"]
+              : workersOnDay.length > 0
+                ? [...workersOnDay]
+                : hasCourses
+                  ? []
+                  : [null];
+            if (!useMergedLane && hasCourses) laneItems.push("__courses__");
+            const laneCount = Math.max(1, laneItems.length);
 
             return (
               <div
@@ -235,9 +279,13 @@ export default function WeeklyCalendarGrid({
                 >
                   {laneItems.map((laneId) => {
                     const isCourseLane = laneId === "__courses__";
-                    const laneShifts = laneId && !isCourseLane
-                      ? dayShifts.filter((s) => s.user_id === laneId)
-                      : [];
+                    const isMergedLane = laneId === "__merged__";
+                    const laneShifts =
+                      laneId && !isCourseLane && !isMergedLane
+                        ? dayShifts.filter((s) => s.user_id === laneId)
+                        : isMergedLane
+                          ? dayShifts
+                          : [];
 
                     return (
                       <div key={laneId ?? "empty"} className={styles.dayLane}>
@@ -245,8 +293,71 @@ export default function WeeklyCalendarGrid({
                           {hours.map((h) => (
                             <div key={h} className={styles.timeSlotCell} />
                           ))}
-                          {isCourseLane
-                            ? dayCourses.map((ev) => {
+                          {isMergedLane ? (
+                            <>
+                              {laneShifts.map((shift) => {
+                                const startMinutes =
+                                  parseTimeToMinutes(shift.start_time) - START_HOUR * 60;
+                                const endMinutes =
+                                  parseTimeToMinutes(shift.end_time) - START_HOUR * 60;
+                                const top = Math.max(0, (startMinutes / totalMinutes) * 100);
+                                const bottom =
+                                  100 - Math.max(0, Math.min(100, (endMinutes / totalMinutes) * 100));
+                                const height = Math.max(6, 100 - top - bottom);
+                                const color = getWorkerColor(userIndexMap.get(shift.user_id) ?? 0);
+                                return (
+                                  <button
+                                    key={shift.id}
+                                    className={styles.shiftBlock}
+                                    style={{
+                                      top: `${top}%`,
+                                      height: `${height}%`,
+                                      borderLeftColor: color,
+                                      backgroundColor: `${color}1A`,
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onShiftClick(shift);
+                                    }}
+                                    title={`${shift.name || "Unknown"} · ${shift.start_time.slice(0, 5)}–${shift.end_time.slice(0, 5)}`}
+                                  >
+                                    <span className={styles.shiftBlockTitle}>
+                                      {shift.name || "Unknown"}
+                                    </span>
+                                    <span className={styles.shiftBlockTime}>
+                                      {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                              {dayCourses.map((ev) => {
+                                const startMinutes =
+                                  parseTimeToMinutes(ev.start_time) - START_HOUR * 60;
+                                const endMinutes =
+                                  parseTimeToMinutes(ev.end_time) - START_HOUR * 60;
+                                const top = Math.max(0, (startMinutes / totalMinutes) * 100);
+                                const bottom =
+                                  100 - Math.max(0, Math.min(100, (endMinutes / totalMinutes) * 100));
+                                const height = Math.max(6, 100 - top - bottom);
+                                return (
+                                  <div
+                                    key={`${ev.course_code}-${ev.start_time}`}
+                                    className={styles.courseBlock}
+                                    style={{ top: `${top}%`, height: `${height}%` }}
+                                    title={`${ev.course_title} · ${ev.start_time.slice(0, 5)}–${ev.end_time.slice(0, 5)} · ${ev.location}`}
+                                  >
+                                    <span className={styles.courseBlockTitle}>
+                                      {ev.course_title}
+                                    </span>
+                                    <span className={styles.courseBlockTime}>
+                                      {ev.start_time.slice(0, 5)} – {ev.end_time.slice(0, 5)}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          ) : isCourseLane ? (
+                            dayCourses.map((ev) => {
                                 const startMinutes =
                                   parseTimeToMinutes(ev.start_time) -
                                   START_HOUR * 60;
@@ -290,7 +401,8 @@ export default function WeeklyCalendarGrid({
                                   </div>
                                 );
                               })
-                            : laneShifts.map((shift) => {
+                            ) : (
+                              laneShifts.map((shift) => {
                                 const startMinutes =
                                   parseTimeToMinutes(shift.start_time) - START_HOUR * 60;
                                 const endMinutes =
@@ -329,7 +441,8 @@ export default function WeeklyCalendarGrid({
                                     </span>
                                   </button>
                                 );
-                              })}
+                              })
+                            )}
                         </div>
                       </div>
                     );
