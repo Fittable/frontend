@@ -211,15 +211,12 @@ export default function WeeklyCalendarGrid({
             const workersOnDay = workersByDate.get(dateStr) || [];
             const hasCourses = hasCoursesByDate.get(dateStr) ?? false;
             const inWorkMonth = date >= workStart && date <= workEnd;
-            const laneCount = Math.max(
-              1,
-              workersOnDay.length + (hasCourses ? 1 : 0)
-            );
 
             const laneItems: (string | null)[] = workersOnDay.length
               ? [...workersOnDay]
               : [null];
             if (hasCourses) laneItems.push("__courses__");
+            const laneCount = laneItems.length;
 
             return (
               <div
