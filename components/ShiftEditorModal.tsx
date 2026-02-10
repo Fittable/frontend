@@ -55,6 +55,9 @@ export default function ShiftEditorModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Normalize time to HH:MM:00 for API
+  const toTime = (hhm: string) => (hhm.length === 5 ? `${hhm}:00` : hhm);
+
   // Detect preset from existing shift times
   const detectFromShift = (start: string, end: string) => {
     const s = start.slice(0, 5);
@@ -62,42 +65,37 @@ export default function ShiftEditorModal({
 
     // Check if it matches morning preset
     if ((s === "09:00" || s === "10:00") && e === "12:00") {
-      return { type: "morning", vacation: s === "10:00" };
+      return { type: "morning" as const, vacation: s === "10:00" };
     }
     // Check if it matches evening preset
     if (s === "13:00" && (e === "17:30" || e === "16:00")) {
-      return { type: "evening", vacation: e === "16:00" };
+      return { type: "evening" as const, vacation: e === "16:00" };
     }
     // Custom
-    return { type: "custom", start: s, end: e };
+    return { type: "custom" as const, start: s, end: e };
   };
 
   useEffect(() => {
     if (shift) {
-      // Editing existing shift – if this date has both morning and evening for same user, show Full Day
+      // Editing: show all blocks this user has on this date (so Full Day shows when both exist)
       const sameUserOnDate = shiftsOnDate.filter((s) => s.user_id === shift.user_id);
-      const detectedList = sameUserOnDate.map((s) => detectFromShift(s.start_time, s.end_time));
+      const detectedList = sameUserOnDate.map((s) => ({ shift: s, ...detectFromShift(s.start_time, s.end_time) }));
       const hasMorning = detectedList.some((d) => d.type === "morning");
       const hasEvening = detectedList.some((d) => d.type === "evening");
       const hasCustom = detectedList.some((d) => d.type === "custom");
       const anyVacation = detectedList.some((d) => d.vacation);
 
-      if (hasMorning && hasEvening && !hasCustom) {
-        setMorningSelected(true);
-        setEveningSelected(true);
-        setCustomSelected(false);
-        setVacationMode(!!anyVacation);
-      } else {
-        const detected = detectFromShift(shift.start_time, shift.end_time);
-        setMorningSelected(detected.type === "morning");
-        setEveningSelected(detected.type === "evening");
-        setCustomSelected(detected.type === "custom");
-        setVacationMode(detected.vacation || false);
-        if (detected.type === "custom") {
-          setCustomStart(detected.start || "13:00");
-          setCustomEnd(detected.end || "14:45");
-        }
+      setMorningSelected(hasMorning);
+      setEveningSelected(hasEvening);
+      setCustomSelected(hasCustom);
+      setVacationMode(!!anyVacation);
+
+      const customEntry = detectedList.find((d) => d.type === "custom");
+      if (customEntry && customEntry.type === "custom") {
+        setCustomStart(customEntry.start ?? "13:00");
+        setCustomEnd(customEntry.end ?? "14:45");
       }
+
       setNote(shift.note || "");
       setUserId(shift.user_id);
     } else {
@@ -145,134 +143,97 @@ export default function ShiftEditorModal({
     setLoading(true);
 
     const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
-    const isFullDaySelection = morningSelected && eveningSelected && !customSelected;
 
     try {
       if (shift) {
-        // Editing existing shift
+        // Editing: reconcile so this user/date has exactly the selected blocks (morning / evening / custom).
         const sameUserOnDate = shiftsOnDate.filter((s) => s.user_id === shift.user_id);
 
-        // Classify existing shifts for this user & date
-        let morningShift: Shift | null = null;
-        let eveningShift: Shift | null = null;
-
+        type BlockType = "morning" | "evening" | "custom";
+        const existingByType: Record<BlockType, Shift | null> = {
+          morning: null,
+          evening: null,
+          custom: null,
+        };
         for (const s of sameUserOnDate) {
           const d = detectFromShift(s.start_time, s.end_time);
-          if (d.type === "morning" && !morningShift) morningShift = s;
-          if (d.type === "evening" && !eveningShift) eveningShift = s;
+          if (d.type !== "custom" && !existingByType[d.type]) existingByType[d.type] = s;
+          if (d.type === "custom" && !existingByType.custom) existingByType.custom = s;
         }
 
-        if (isFullDaySelection && !customSelected) {
-          // Full Day selected while editing
-          if (morningShift && eveningShift) {
-            // Already has both morning and evening – just normalize times/vacation
-            await api.updateShift(morningShift.id, {
-              start_time: times.morning.start + ":00",
-              end_time: times.morning.end + ":00",
-              note: morningShift.id === shift.id ? note || undefined : morningShift.note || undefined,
-              user_id: isAdmin ? userId : undefined,
-            });
+        interface DesiredBlock {
+          type: BlockType;
+          start: string;
+          end: string;
+        }
+        const desired: DesiredBlock[] = [];
+        if (morningSelected) desired.push({ type: "morning", start: times.morning.start, end: times.morning.end });
+        if (eveningSelected) desired.push({ type: "evening", start: times.evening.start, end: times.evening.end });
+        if (customSelected) desired.push({ type: "custom", start: customStart, end: customEnd });
 
-            await api.updateShift(eveningShift.id, {
-              start_time: times.evening.start + ":00",
-              end_time: times.evening.end + ":00",
-              note: eveningShift.id === shift.id ? note || undefined : eveningShift.note || undefined,
-              user_id: isAdmin ? userId : undefined,
-            });
+        const assignable = [...sameUserOnDate];
+        const assigned = new Set<string>();
+        const toUpdate: { id: string; start: string; end: string }[] = [];
+        const toCreate: DesiredBlock[] = [];
+
+        for (const block of desired) {
+          const existing = existingByType[block.type];
+          const candidate = existing && !assigned.has(existing.id) ? existing : assignable.find((s) => !assigned.has(s.id));
+          if (candidate) {
+            assigned.add(candidate.id);
+            toUpdate.push({ id: candidate.id, start: block.start, end: block.end });
           } else {
-            // Only one preset block exists – keep this one and create the missing one
-            const detected = detectFromShift(shift.start_time, shift.end_time);
-
-            const keepMorning =
-              detected.type === "morning"
-                ? true
-                : detected.type === "evening"
-                ? false
-                : true; // default: keep morning for custom/unknown
-
-            const primaryStart = keepMorning ? times.morning.start : times.evening.start;
-            const primaryEnd = keepMorning ? times.morning.end : times.evening.end;
-            const secondaryStart = keepMorning ? times.evening.start : times.morning.start;
-            const secondaryEnd = keepMorning ? times.evening.end : times.morning.end;
-
-            // Update the existing shift to the primary block
-            await api.updateShift(shift.id, {
-              start_time: primaryStart + ":00",
-              end_time: primaryEnd + ":00",
-              note: note || undefined,
-              user_id: isAdmin ? userId : undefined,
-            });
-
-            // Create the missing block as a new shift (only if it doesn't already exist)
-            if (!(keepMorning ? eveningShift : morningShift)) {
-              await api.createShift({
-                date,
-                start_time: secondaryStart + ":00",
-                end_time: secondaryEnd + ":00",
-                note: note || undefined,
-                user_id: isAdmin ? userId : undefined,
-              });
-            }
+            toCreate.push(block);
           }
-        } else {
-          // Not full day – either single preset (morning/evening) or custom
-          if (!customSelected && (morningSelected || eveningSelected)) {
-            // Switching from full day to single preset should remove the other preset block
-            const desiredTimes = morningSelected ? times.morning : times.evening;
+        }
 
-            // Delete other preset (morning/evening) shifts for this user/date except the one we're editing
-            for (const s of sameUserOnDate) {
-              if (s.id === shift.id) continue;
-              const d = detectFromShift(s.start_time, s.end_time);
-              if (d.type === "morning" || d.type === "evening") {
-                await api.deleteShift(s.id);
-              }
-            }
+        const toDelete = sameUserOnDate.filter((s) => !assigned.has(s.id));
 
-            // Update the current shift to the selected preset
-            await api.updateShift(shift.id, {
-              start_time: desiredTimes.start + ":00",
-              end_time: desiredTimes.end + ":00",
-              note: note || undefined,
-              user_id: isAdmin ? userId : undefined,
-            });
-          } else {
-            // Custom time – just update this shift
-            await api.updateShift(shift.id, {
-              start_time: customStart + ":00",
-              end_time: customEnd + ":00",
-              note: note || undefined,
-              user_id: isAdmin ? userId : undefined,
-            });
-          }
+        for (const s of toDelete) {
+          await api.deleteShift(s.id);
+        }
+        for (const { id, start, end } of toUpdate) {
+          await api.updateShift(id, {
+            start_time: toTime(start),
+            end_time: toTime(end),
+            note: note || undefined,
+            user_id: isAdmin ? userId : undefined,
+          });
+        }
+        for (const block of toCreate) {
+          await api.createShift({
+            date,
+            start_time: toTime(block.start),
+            end_time: toTime(block.end),
+            note: note || undefined,
+            user_id: isAdmin ? userId : undefined,
+          });
         }
       } else {
         // Creating new shift(s) - create one for each selected option
         if (morningSelected) {
           await api.createShift({
             date,
-            start_time: times.morning.start + ":00",
-            end_time: times.morning.end + ":00",
+            start_time: toTime(times.morning.start),
+            end_time: toTime(times.morning.end),
             note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
-
         if (eveningSelected) {
           await api.createShift({
             date,
-            start_time: times.evening.start + ":00",
-            end_time: times.evening.end + ":00",
+            start_time: toTime(times.evening.start),
+            end_time: toTime(times.evening.end),
             note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
-
         if (customSelected) {
           await api.createShift({
             date,
-            start_time: customStart + ":00",
-            end_time: customEnd + ":00",
+            start_time: toTime(customStart),
+            end_time: toTime(customEnd),
             note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
