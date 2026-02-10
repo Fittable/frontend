@@ -1,0 +1,223 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.headerRow {
+  display: grid;
+  grid-template-columns: 72px repeat(7, 1fr);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.timeColumnHeader {
+  border-right: 1px solid var(--border-subtle);
+}
+
+.dayHeader {
+  padding: 10px 8px;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.dayHeader:last-child {
+  border-right: none;
+}
+
+.dayHeader:hover {
+  background: var(--bg-hover);
+}
+
+.dayHeaderSelected {
+  background: var(--bg-active);
+}
+
+.dayHeaderOutside {
+  opacity: 0.5;
+}
+
+.dayHeaderHoliday {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.dayHeaderLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dayName {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.dayNumber {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.dayNumberToday {
+  background: var(--accent);
+  color: #fff;
+}
+
+.dayMonth {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.holidayLabel {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.holidayLabelPublic {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+.timeColumn {
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.timeSlotLabel {
+  height: 40px;
+  padding-right: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.weekColumns {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  position: relative;
+  overflow: auto;
+}
+
+.dayColumn {
+  border-right: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.dayColumn:last-child {
+  border-right: none;
+}
+
+.dayColumnOutside {
+  background: var(--bg-secondary);
+}
+
+.dayColumnGrid {
+  position: relative;
+  height: 40px * 20; /* 20 hours from 4 to 24 */
+}
+
+.timeSlotCell {
+  height: 40px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.shiftBlock {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.16);
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(8px);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.shiftBlock:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+}
+
+.shiftBlockTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shiftBlockTime {
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .headerRow {
+    grid-template-columns: 60px repeat(7, 1fr);
+  }
+
+  .body {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .timeSlotLabel {
+    height: 36px;
+    font-size: 10px;
+  }
+
+  .timeSlotCell {
+    height: 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .headerRow {
+    grid-template-columns: 52px repeat(7, 1fr);
+  }
+
+  .body {
+    grid-template-columns: 52px 1fr;
+  }
+
+  .timeSlotLabel {
+    height: 32px;
+  }
+
+  .timeSlotCell {
+    height: 32px;
+  }
+}
+

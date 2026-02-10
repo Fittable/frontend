@@ -15,6 +15,7 @@ import {
 import Sidebar from "@/components/Sidebar";
 import CalendarHeader from "@/components/CalendarHeader";
 import CalendarGrid from "@/components/CalendarGrid";
+import WeeklyCalendarGrid from "@/components/WeeklyCalendarGrid";
 import ShiftDetailPanel from "@/components/ShiftDetailPanel";
 import ShiftEditorModal from "@/components/ShiftEditorModal";
 import styles from "./page.module.css";
@@ -26,6 +27,7 @@ export default function CalendarPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [visibleWorkerIds, setVisibleWorkerIds] = useState<string[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -109,21 +111,11 @@ export default function CalendarPage() {
       }
       if (isMounted) setLoading(false);
     };
-    
-    // Add timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (isMounted) {
-        console.error("Initialization timeout - redirecting to login");
-        setLoading(false);
-        router.push("/login?error=" + encodeURIComponent("Session timed out. Please sign in again."));
-      }
-    }, 10000); // 10 second timeout
-    
+
     init();
-    
+
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
     };
   }, [router]);
 
@@ -275,9 +267,11 @@ export default function CalendarPage() {
         {/* Header */}
         <CalendarHeader
           workMonth={workMonth}
+            viewMode={viewMode}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
           onToday={handleToday}
+            onViewModeChange={setViewMode}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
 
@@ -285,16 +279,29 @@ export default function CalendarPage() {
         <div className={styles.content}>
           {/* Calendar Grid */}
           <div className={styles.calendarContainer}>
-            <CalendarGrid
-              workMonth={workMonth}
-              shifts={filteredShifts}
-              users={users}
-              holidays={holidays}
-              selectedDate={selectedDate}
-              onDayClick={handleDayClick}
-              onShiftClick={handleShiftClick}
-              onDayDoubleClick={handleDayDoubleClick}
-            />
+            {viewMode === "month" ? (
+              <CalendarGrid
+                workMonth={workMonth}
+                shifts={filteredShifts}
+                users={users}
+                holidays={holidays}
+                selectedDate={selectedDate}
+                onDayClick={handleDayClick}
+                onShiftClick={handleShiftClick}
+                onDayDoubleClick={handleDayDoubleClick}
+              />
+            ) : (
+              <WeeklyCalendarGrid
+                workMonth={workMonth}
+                shifts={filteredShifts}
+                users={users}
+                holidays={holidays}
+                selectedDate={selectedDate}
+                onDayClick={handleDayClick}
+                onShiftClick={handleShiftClick}
+                onDayDoubleClick={handleDayDoubleClick}
+              />
+            )}
           </div>
 
           {/* Shift Detail Panel */}

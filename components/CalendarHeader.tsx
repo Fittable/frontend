@@ -5,17 +5,21 @@ import styles from "./CalendarHeader.module.css";
 
 interface CalendarHeaderProps {
   workMonth: WorkMonth;
+  viewMode: "month" | "week";
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
+  onViewModeChange: (mode: "month" | "week") => void;
   onMenuToggle: () => void;
 }
 
 export default function CalendarHeader({
   workMonth,
+  viewMode,
   onPrevMonth,
   onNextMonth,
   onToday,
+  onViewModeChange,
   onMenuToggle,
 }: CalendarHeaderProps) {
   const monthLabel = getWorkMonthLabel(workMonth);
@@ -33,6 +37,28 @@ export default function CalendarHeader({
       </div>
 
       <div className={styles.right}>
+        {/* View mode toggle */}
+        <div className={styles.viewToggle} aria-label="Calendar view">
+          <button
+            type="button"
+            className={`${styles.viewToggleButton} ${
+              viewMode === "month" ? styles.viewToggleButtonActive : ""
+            }`}
+            onClick={() => onViewModeChange("month")}
+          >
+            Month
+          </button>
+          <button
+            type="button"
+            className={`${styles.viewToggleButton} ${
+              viewMode === "week" ? styles.viewToggleButtonActive : ""
+            }`}
+            onClick={() => onViewModeChange("week")}
+          >
+            Week
+          </button>
+        </div>
+
         {/* Today button */}
         <button onClick={onToday} className={styles.todayButton}>
           Today
