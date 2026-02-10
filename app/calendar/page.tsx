@@ -33,7 +33,7 @@ export default function CalendarPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week">("week");
   const [viewScope, setViewScope] = useState<"all" | "me">("me");
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [visibleWorkerIds, setVisibleWorkerIds] = useState<string[]>([]);

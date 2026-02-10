@@ -114,6 +114,7 @@
 }
 
 .userAvatar {
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -124,6 +125,22 @@
   justify-content: center;
   font-weight: 600;
   font-size: 14px;
+  overflow: hidden;
+}
+
+.userAvatarLetter {
+  position: relative;
+  z-index: 0;
+}
+
+.userAvatarImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  z-index: 1;
 }
 
 .userDetails {

@@ -57,6 +57,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
+  const [profileImageError, setProfileImageError] = useState(false);
 
   // Fetch hours for the current work month (25th to 24th)
   // Re-fetch when shifts change (after create/update/delete); depend on shifts so edits (same length) also trigger refetch
@@ -172,7 +173,17 @@ export default function Sidebar({
           <div className={styles.userInfo}>
             <div className={styles.userMeta}>
               <div className={styles.userAvatar}>
-                {(user.name || user.student_id).charAt(0).toUpperCase()}
+                <span className={styles.userAvatarLetter}>
+                  {(user.name || user.student_id).charAt(0).toUpperCase()}
+                </span>
+                {!profileImageError && (
+                  <img
+                    src="/api/profile/image"
+                    alt=""
+                    className={styles.userAvatarImage}
+                    onError={() => setProfileImageError(true)}
+                  />
+                )}
               </div>
               <div className={styles.userDetails}>
                 <span className={styles.userName}>{user.name || user.student_id}</span>
