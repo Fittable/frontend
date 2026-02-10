@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { BACKEND_URL } from "@/lib/config";
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("access_token")?.value;
+  // Prefer session token for logout if backend expects it; otherwise use JWT
+  const sessionToken = request.cookies.get("session_token")?.value;
+  const accessToken = request.cookies.get("access_token")?.value;
+  const token = sessionToken ?? accessToken;
 
   if (token) {
     try {
@@ -18,6 +21,7 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({ message: "Logged out" });
   response.cookies.delete("access_token");
+  response.cookies.delete("session_token");
   return response;
 }
 

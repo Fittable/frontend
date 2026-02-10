@@ -48,7 +48,10 @@ export type LoginCredentials = LoginRequest;
 export interface LoginResponse {
   success: boolean;
   message: string;
+  /** KLAS session token – use only for endpoints that still expect it (e.g. /api/auth/me) */
   token: string | null;
+  /** JWT – use for shifts, users, holidays, and all other protected API routes */
+  access_token: string | null;
 }
 
 export interface ApiError {

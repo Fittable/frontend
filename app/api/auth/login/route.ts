@@ -22,16 +22,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // LoginResponse: { success, message, token }
-    if (data.success && data.token) {
+    // LoginResponse: { success, message, token, access_token }
+    // Use JWT (access_token) for shifts/users/holidays; session (token) for /api/auth/me if backend still expects it
+    const jwt = data.access_token ?? null;
+    const sessionToken = data.token ?? null;
+    const hasAuth = data.success && (jwt || sessionToken);
+
+    if (hasAuth) {
       const response = NextResponse.json(data);
-      response.cookies.set("access_token", data.token, {
+      const cookieOpts = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: "lax" as const,
         maxAge: 60 * 60 * 24, // 24 hours (matching backend)
         path: "/",
-      });
+      };
+      // JWT: used for /api/shifts, /api/users, /api/holidays, etc. If backend only returns session token, use it so auth still works.
+      response.cookies.set("access_token", jwt ?? sessionToken!, cookieOpts);
+      // Session token: used for /api/auth/me (and logout) if backend still expects it
+      if (sessionToken) {
+        response.cookies.set("session_token", sessionToken, cookieOpts);
+      }
       return response;
     }
 
@@ -42,7 +53,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Login proxy error:", error);
-    return NextResponse.json({ detail: "Login fucking failed" }, { status: 500 });
+    return NextResponse.json({ detail: "Login failed" }, { status: 500 });
   }
 }
 

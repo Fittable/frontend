@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { BACKEND_URL } from "@/lib/config";
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("access_token")?.value;
+  // Prefer session token for /api/auth/me if backend still expects it; otherwise use JWT
+  const sessionToken = request.cookies.get("session_token")?.value;
+  const accessToken = request.cookies.get("access_token")?.value;
+  const token = sessionToken ?? accessToken;
 
   if (!token) {
     return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
