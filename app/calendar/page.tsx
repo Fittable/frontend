@@ -332,6 +332,7 @@ export default function CalendarPage() {
         <ShiftEditorModal
           shift={editingShift}
           date={selectedDate || ""}
+          shiftsOnDate={shiftsForDate}
           users={users}
           isAdmin={user.role === "admin"}
           currentUserId={user.id}

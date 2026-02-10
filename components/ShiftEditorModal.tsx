@@ -9,6 +9,8 @@ import styles from "./ShiftEditorModal.module.css";
 interface ShiftEditorModalProps {
   shift: Shift | null;
   date: string;
+  /** All shifts on the selected date (used to detect full-day and set Full Day checked) */
+  shiftsOnDate?: Shift[];
   users: User[];
   isAdmin: boolean;
   currentUserId: string;
@@ -32,6 +34,7 @@ const PRESETS = {
 export default function ShiftEditorModal({
   shift,
   date,
+  shiftsOnDate = [],
   users,
   isAdmin,
   currentUserId,
@@ -71,15 +74,29 @@ export default function ShiftEditorModal({
 
   useEffect(() => {
     if (shift) {
-      // Editing existing shift
-      const detected = detectFromShift(shift.start_time, shift.end_time);
-      setMorningSelected(detected.type === "morning");
-      setEveningSelected(detected.type === "evening");
-      setCustomSelected(detected.type === "custom");
-      setVacationMode(detected.vacation || false);
-      if (detected.type === "custom") {
-        setCustomStart(detected.start || "13:00");
-        setCustomEnd(detected.end || "14:45");
+      // Editing existing shift – if this date has both morning and evening for same user, show Full Day
+      const sameUserOnDate = shiftsOnDate.filter((s) => s.user_id === shift.user_id);
+      const detectedList = sameUserOnDate.map((s) => detectFromShift(s.start_time, s.end_time));
+      const hasMorning = detectedList.some((d) => d.type === "morning");
+      const hasEvening = detectedList.some((d) => d.type === "evening");
+      const hasCustom = detectedList.some((d) => d.type === "custom");
+      const anyVacation = detectedList.some((d) => d.vacation);
+
+      if (hasMorning && hasEvening && !hasCustom) {
+        setMorningSelected(true);
+        setEveningSelected(true);
+        setCustomSelected(false);
+        setVacationMode(!!anyVacation);
+      } else {
+        const detected = detectFromShift(shift.start_time, shift.end_time);
+        setMorningSelected(detected.type === "morning");
+        setEveningSelected(detected.type === "evening");
+        setCustomSelected(detected.type === "custom");
+        setVacationMode(detected.vacation || false);
+        if (detected.type === "custom") {
+          setCustomStart(detected.start || "13:00");
+          setCustomEnd(detected.end || "14:45");
+        }
       }
       setNote(shift.note || "");
       setUserId(shift.user_id);
@@ -94,7 +111,7 @@ export default function ShiftEditorModal({
       setNote("");
       setUserId(currentUserId);
     }
-  }, [shift, currentUserId]);
+  }, [shift, currentUserId, shiftsOnDate]);
 
   // Ensure at least one option is selected
   const handleMorningToggle = () => {
@@ -128,29 +145,107 @@ export default function ShiftEditorModal({
     setLoading(true);
 
     const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
+    const isFullDaySelection = morningSelected && eveningSelected && !customSelected;
 
     try {
       if (shift) {
-        // Editing existing shift - update with first selected option
-        let startTime: string, endTime: string;
+        // Editing existing shift
+        const sameUserOnDate = shiftsOnDate.filter((s) => s.user_id === shift.user_id);
 
-        if (morningSelected) {
-          startTime = times.morning.start;
-          endTime = times.morning.end;
-        } else if (eveningSelected) {
-          startTime = times.evening.start;
-          endTime = times.evening.end;
-        } else {
-          startTime = customStart;
-          endTime = customEnd;
+        // Classify existing shifts for this user & date
+        let morningShift: Shift | null = null;
+        let eveningShift: Shift | null = null;
+
+        for (const s of sameUserOnDate) {
+          const d = detectFromShift(s.start_time, s.end_time);
+          if (d.type === "morning" && !morningShift) morningShift = s;
+          if (d.type === "evening" && !eveningShift) eveningShift = s;
         }
 
-        await api.updateShift(shift.id, {
-          start_time: startTime + ":00",
-          end_time: endTime + ":00",
-          note: note || undefined,
-          user_id: isAdmin ? userId : undefined,
-        });
+        if (isFullDaySelection && !customSelected) {
+          // Full Day selected while editing
+          if (morningShift && eveningShift) {
+            // Already has both morning and evening – just normalize times/vacation
+            await api.updateShift(morningShift.id, {
+              start_time: times.morning.start + ":00",
+              end_time: times.morning.end + ":00",
+              note: morningShift.id === shift.id ? note || undefined : morningShift.note || undefined,
+              user_id: isAdmin ? userId : undefined,
+            });
+
+            await api.updateShift(eveningShift.id, {
+              start_time: times.evening.start + ":00",
+              end_time: times.evening.end + ":00",
+              note: eveningShift.id === shift.id ? note || undefined : eveningShift.note || undefined,
+              user_id: isAdmin ? userId : undefined,
+            });
+          } else {
+            // Only one preset block exists – keep this one and create the missing one
+            const detected = detectFromShift(shift.start_time, shift.end_time);
+
+            const keepMorning =
+              detected.type === "morning"
+                ? true
+                : detected.type === "evening"
+                ? false
+                : true; // default: keep morning for custom/unknown
+
+            const primaryStart = keepMorning ? times.morning.start : times.evening.start;
+            const primaryEnd = keepMorning ? times.morning.end : times.evening.end;
+            const secondaryStart = keepMorning ? times.evening.start : times.morning.start;
+            const secondaryEnd = keepMorning ? times.evening.end : times.morning.end;
+
+            // Update the existing shift to the primary block
+            await api.updateShift(shift.id, {
+              start_time: primaryStart + ":00",
+              end_time: primaryEnd + ":00",
+              note: note || undefined,
+              user_id: isAdmin ? userId : undefined,
+            });
+
+            // Create the missing block as a new shift (only if it doesn't already exist)
+            if (!(keepMorning ? eveningShift : morningShift)) {
+              await api.createShift({
+                date,
+                start_time: secondaryStart + ":00",
+                end_time: secondaryEnd + ":00",
+                note: note || undefined,
+                user_id: isAdmin ? userId : undefined,
+              });
+            }
+          }
+        } else {
+          // Not full day – either single preset (morning/evening) or custom
+          if (!customSelected && (morningSelected || eveningSelected)) {
+            // Switching from full day to single preset should remove the other preset block
+            const desiredTimes = morningSelected ? times.morning : times.evening;
+
+            // Delete other preset (morning/evening) shifts for this user/date except the one we're editing
+            for (const s of sameUserOnDate) {
+              if (s.id === shift.id) continue;
+              const d = detectFromShift(s.start_time, s.end_time);
+              if (d.type === "morning" || d.type === "evening") {
+                await api.deleteShift(s.id);
+              }
+            }
+
+            // Update the current shift to the selected preset
+            await api.updateShift(shift.id, {
+              start_time: desiredTimes.start + ":00",
+              end_time: desiredTimes.end + ":00",
+              note: note || undefined,
+              user_id: isAdmin ? userId : undefined,
+            });
+          } else {
+            // Custom time – just update this shift
+            await api.updateShift(shift.id, {
+              start_time: customStart + ":00",
+              end_time: customEnd + ":00",
+              note: note || undefined,
+              user_id: isAdmin ? userId : undefined,
+            });
+          }
+        }
       } else {
         // Creating new shift(s) - create one for each selected option
         if (morningSelected) {
