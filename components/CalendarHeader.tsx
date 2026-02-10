@@ -4,14 +4,18 @@ import { WorkMonth, getWorkMonthLabel, getWorkMonthLabelKo } from "@/lib/workMon
 import { t, Language } from "@/lib/i18n";
 import styles from "./CalendarHeader.module.css";
 
+export type ViewScope = "all" | "me";
+
 interface CalendarHeaderProps {
   workMonth: WorkMonth;
   language: Language;
   viewMode: "month" | "week";
+  viewScope: ViewScope;
+  onViewModeChange: (mode: "month" | "week") => void;
+  onViewScopeChange: (scope: ViewScope) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
-  onViewModeChange: (mode: "month" | "week") => void;
   onMenuToggle: () => void;
 }
 
@@ -19,10 +23,12 @@ export default function CalendarHeader({
   workMonth,
   language,
   viewMode,
+  viewScope,
   onPrevMonth,
   onNextMonth,
   onToday,
   onViewModeChange,
+  onViewScopeChange,
   onMenuToggle,
 }: CalendarHeaderProps) {
   const monthLabel =
@@ -38,6 +44,28 @@ export default function CalendarHeader({
 
         {/* Month/Year title */}
         <h1 className={styles.title}>{monthLabel}</h1>
+
+        {/* Scope toggle: All / My schedule */}
+        <div className={styles.scopeToggle} aria-label="Calendar scope">
+          <button
+            type="button"
+            className={`${styles.scopeToggleButton} ${
+              viewScope === "all" ? styles.scopeToggleButtonActive : ""
+            }`}
+            onClick={() => onViewScopeChange("all")}
+          >
+            {t(language, "calendar.all")}
+          </button>
+          <button
+            type="button"
+            className={`${styles.scopeToggleButton} ${
+              viewScope === "me" ? styles.scopeToggleButtonActive : ""
+            }`}
+            onClick={() => onViewScopeChange("me")}
+          >
+            {t(language, "calendar.mySchedule")}
+          </button>
+        </div>
       </div>
 
       <div className={styles.right}>

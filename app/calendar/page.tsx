@@ -34,6 +34,7 @@ export default function CalendarPage() {
   const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [viewScope, setViewScope] = useState<"all" | "me">("me");
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [visibleWorkerIds, setVisibleWorkerIds] = useState<string[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
@@ -276,10 +277,13 @@ export default function CalendarPage() {
     setSelectedDate(null);
   };
 
-  // Filter shifts based on visible worker IDs
-  const filteredShifts = visibleWorkerIds.length === 0
-    ? shifts
-    : shifts.filter((s) => visibleWorkerIds.includes(s.user_id));
+  // Filter shifts: "My schedule" = only current user; "All" = by sidebar worker filter
+  const filteredShifts =
+    viewScope === "me" && user
+      ? shifts.filter((s) => s.user_id === user.id)
+      : visibleWorkerIds.length === 0
+        ? shifts
+        : shifts.filter((s) => visibleWorkerIds.includes(s.user_id));
 
   // Expand timetable to course events for the current work month range
   const courseEvents: CourseEvent[] =
@@ -331,11 +335,13 @@ export default function CalendarPage() {
         <CalendarHeader
           workMonth={workMonth}
           language={language}
-            viewMode={viewMode}
+          viewMode={viewMode}
+          viewScope={viewScope}
+          onViewModeChange={setViewMode}
+          onViewScopeChange={setViewScope}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
           onToday={handleToday}
-            onViewModeChange={setViewMode}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
 

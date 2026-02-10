@@ -11,6 +11,8 @@ export type TranslationKey =
   | "calendar.today"
   | "calendar.month"
   | "calendar.week"
+  | "calendar.all"
+  | "calendar.mySchedule"
   // Shifts / detail panel
   | "shifts.none"
   | "shifts.add"
@@ -67,6 +69,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "calendar.today": "오늘",
     "calendar.month": "월",
     "calendar.week": "주",
+    "calendar.all": "전체",
+    "calendar.mySchedule": "내 일정",
 
     // Shifts / detail panel
     "shifts.none": "등록된 근무가 없습니다",
@@ -124,6 +128,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "calendar.today": "Today",
     "calendar.month": "Month",
     "calendar.week": "Week",
+    "calendar.all": "All",
+    "calendar.mySchedule": "My schedule",
 
     // Shifts / detail panel
     "shifts.none": "No shifts scheduled",

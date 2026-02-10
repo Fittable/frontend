@@ -37,6 +37,38 @@
   margin: 0;
 }
 
+.scopeToggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+}
+
+.scopeToggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.scopeToggleButton:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.scopeToggleButtonActive {
+  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
+  color: var(--accent-text, #1d4ed8);
+}
+
 .right {
   display: flex;
   align-items: center;
@@ -154,12 +186,26 @@
     padding: 0 16px;
   }
 
+  .left {
+    gap: 10px;
+  }
+
   .menuButton {
     display: flex;
   }
 
   .title {
     font-size: 16px;
+  }
+
+  .scopeToggle {
+    padding: 2px;
+  }
+
+  .scopeToggleButton {
+    min-width: 56px;
+    padding: 5px 8px;
+    font-size: 12px;
   }
 
   .langToggle {
