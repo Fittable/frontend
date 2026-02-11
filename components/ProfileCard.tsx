@@ -6,6 +6,23 @@ import { ProfileSettings, ProfileSettingsUpdate } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
 import styles from "./ProfileCard.module.css";
 
+const ROOM_NO_OPTIONS = ["102호", "103호"] as const;
+
+const WORK_CATEGORY_OPTIONS = ["일반", "신규"] as const;
+const WORK_CATEGORY_DEFAULT: (typeof WORK_CATEGORY_OPTIONS)[number] = "일반";
+
+const DEPT_NAME_OPTIONS = [
+  "공과대학",
+  "인문사회과학대학",
+  "경영대학",
+  "자연과학대학",
+  "전자정보공과대학",
+  "정책법학대학",
+  "인제니움대학",
+  "인공지능융합대학",
+  "참빛인재대학",
+] as const;
+
 interface ProfileCardProps {
   language: Language;
   onClose: () => void;
@@ -26,7 +43,7 @@ export default function ProfileCard({
   const [roomNo, setRoomNo] = useState("");
   const [nickname, setNickname] = useState("");
   const [deptName, setDeptName] = useState("");
-  const [workCategory, setWorkCategory] = useState("");
+  const [workCategory, setWorkCategory] = useState(WORK_CATEGORY_DEFAULT);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -37,7 +54,7 @@ export default function ProfileCard({
       setRoomNo(data.room_no ?? "");
       setNickname(data.nickname ?? "");
       setDeptName(data.dept_name ?? "");
-      setWorkCategory(data.work_category ?? "");
+      setWorkCategory(data.work_category === "일반" || data.work_category === "신규" ? data.work_category : WORK_CATEGORY_DEFAULT);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
@@ -152,13 +169,19 @@ export default function ProfileCard({
 
           <div className={styles.row}>
             <span className={styles.label}>{t(language, "profile.roomNo")}</span>
-            <input
-              type="text"
-              className={styles.input}
+            <select
+              className={styles.select}
               value={roomNo}
               onChange={(e) => setRoomNo(e.target.value)}
-              placeholder={t(language, "profile.roomNo")}
-            />
+              aria-label={t(language, "profile.roomNo")}
+            >
+              <option value="">—</option>
+              {ROOM_NO_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
           </div>
           <div className={styles.row}>
             <span className={styles.label}>{t(language, "profile.nickname")}</span>
@@ -172,23 +195,37 @@ export default function ProfileCard({
           </div>
           <div className={styles.row}>
             <span className={styles.label}>{t(language, "profile.deptName")}</span>
-            <input
-              type="text"
-              className={styles.input}
+            <select
+              className={styles.select}
               value={deptName}
               onChange={(e) => setDeptName(e.target.value)}
-              placeholder={t(language, "profile.deptName")}
-            />
+              aria-label={t(language, "profile.deptName")}
+            >
+              <option value="">—</option>
+              {DEPT_NAME_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
           </div>
           <div className={styles.row}>
             <span className={styles.label}>{t(language, "profile.workCategory")}</span>
-            <input
-              type="text"
-              className={styles.input}
+            <select
+              className={styles.select}
               value={workCategory}
-              onChange={(e) => setWorkCategory(e.target.value)}
-              placeholder={t(language, "profile.workCategory")}
-            />
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "일반" || v === "신규") setWorkCategory(v);
+              }}
+              aria-label={t(language, "profile.workCategory")}
+            >
+              {WORK_CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
           </div>
 
           {saveError && <div className={styles.error} style={{ marginTop: 12 }}>{saveError}</div>}

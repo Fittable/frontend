@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { t, Language } from "@/lib/i18n";
 import styles from "./page.module.css";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [studentId, setStudentId] = useState("");
@@ -131,6 +131,24 @@ export default function LoginPage() {
         <span>Fittable</span>
       </footer>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.container}>
+        <div className={styles.bgPattern} />
+        <div className={styles.card}>
+          <div className={styles.logoWrapper}><div className={styles.logo} /></div>
+          <h1 className={styles.title}>{t("ko", "login.title")}</h1>
+          <p className={styles.subtitle}>{t("ko", "login.subtitle")}</p>
+          <div style={{ padding: "2rem", textAlign: "center" }}>Loading…</div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
 
