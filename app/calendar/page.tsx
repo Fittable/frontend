@@ -3,7 +3,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { User, UserMe, Shift, Holiday, TimetableResponse, CourseEvent } from "@/lib/types";
+import {
+  User,
+  UserMe,
+  Shift,
+  Holiday,
+  TimetableResponse,
+  CourseEvent,
+  ProfileSettings,
+} from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonth,
@@ -21,7 +29,7 @@ import {
 import Sidebar from "@/components/Sidebar";
 import CalendarHeader from "@/components/CalendarHeader";
 import CalendarGrid from "@/components/CalendarGrid";
-import WeeklyCalendarGrid from "@/components/WeeklyCalendarGrid";
+import WeeklyCalendarGrid from "../../components/WeeklyCalendarGrid";
 import ShiftDetailPanel from "@/components/ShiftDetailPanel";
 import ShiftEditorModal from "@/components/ShiftEditorModal";
 import styles from "./page.module.css";
@@ -43,6 +51,8 @@ export default function CalendarPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [timetable, setTimetable] = useState<TimetableResponse | null>(null);
+  const [profile, setProfile] = useState<ProfileSettings | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const loadShifts = useCallback(async () => {
     try {
@@ -132,6 +142,15 @@ export default function CalendarPage() {
         // Convert UserMe to User format (they're compatible)
         setUser(me as User);
 
+        try {
+          const profileData = await api.getProfileSettings();
+          if (!isMounted) return;
+          setProfile(profileData);
+        } catch (err) {
+          console.error("Failed to load profile:", err);
+          if (isMounted) setProfile(null);
+        }
+
         // All users can see all workers (for shared schedule visibility)
         try {
           const userList = await api.getUsers();
@@ -217,6 +236,51 @@ export default function CalendarPage() {
     setSelectedDate(formatDateStr(today));
   };
 
+  const handleDownloadWorklog = async () => {
+    if (!user) return;
+
+    const month = `${workMonth.startYear}-${String(workMonth.startMonth + 1).padStart(2, "0")}`;
+
+    setDownloadingPdf(true);
+    try {
+      const res = await fetch(`/api/work-log/pdf/preview?month=${encodeURIComponent(month)}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        let message = "근무일지 다운로드에 실패했습니다.";
+        try {
+          const data = JSON.parse(text);
+          message = data.detail ?? data.message ?? message;
+        } catch {
+          if (text) message = text;
+        }
+        throw new Error(message);
+      }
+
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get("Content-Disposition");
+      const filenameMatch = contentDisposition?.match(/filename="?([^";\n]+)"?/);
+      const filename = filenameMatch?.[1]
+        ? decodeURIComponent(filenameMatch[1].replace(/^"/, "").replace(/"$/, ""))
+        : `work_log_${month}.pdf`;
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download worklog:", err);
+      alert(err instanceof Error ? err.message : "근무일지 다운로드에 실패했습니다.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   // Keyboard navigation (arrows respect month vs week view)
   useEffect(() => {
     const handlePrev = viewMode === "week" ? handlePrevWeek : handlePrevMonth;
@@ -299,13 +363,24 @@ export default function CalendarPage() {
     setSelectedDate(null);
   };
 
-  // Filter shifts: "My schedule" = only current user; "All" = by sidebar worker filter
-  const filteredShifts =
-    viewScope === "me" && user
-      ? shifts.filter((s) => s.user_id === user.id)
-      : visibleWorkerIds.length === 0
+  // Filter shifts: "My schedule" = only current user; "All" = by sidebar worker filter, but always include current user's work shifts
+  const filteredShifts = (() => {
+    if (viewScope === "me" && user) {
+      return shifts.filter((s) => s.user_id === user.id);
+    }
+    const base =
+      visibleWorkerIds.length === 0
         ? shifts
         : shifts.filter((s) => visibleWorkerIds.includes(s.user_id));
+    // In "All" view, always include current user's work shifts (even when filtering by other workers)
+    if (viewScope === "all" && user) {
+      const myShifts = shifts.filter((s) => s.user_id === user.id);
+      const baseIds = new Set(base.map((s) => s.id));
+      const toAdd = myShifts.filter((s) => !baseIds.has(s.id));
+      return [...base, ...toAdd];
+    }
+    return base;
+  })();
 
   // Expand timetable to course events for the current work month range
   const allCourseEvents: CourseEvent[] =
@@ -361,12 +436,14 @@ export default function CalendarPage() {
           language={language}
           viewMode={viewMode}
           viewScope={viewScope}
+          downloadDisabled={downloadingPdf}
           onViewModeChange={setViewMode}
           onViewScopeChange={setViewScope}
           onPrevMonth={viewMode === "week" ? handlePrevWeek : handlePrevMonth}
           onNextMonth={viewMode === "week" ? handleNextWeek : handleNextMonth}
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          onDownloadWorklog={handleDownloadWorklog}
         />
 
         {/* Calendar and Panel Container */}
