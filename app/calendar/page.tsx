@@ -34,6 +34,27 @@ import ShiftDetailPanel from "@/components/ShiftDetailPanel";
 import ShiftEditorModal from "@/components/ShiftEditorModal";
 import styles from "./page.module.css";
 
+/** Parse filename from Content-Disposition header. Supports RFC 5987 (filename*=UTF-8''...) and legacy filename="...". */
+function parseContentDispositionFilename(header: string | null): string | null {
+  if (!header) return null;
+  // RFC 5987: filename*=charset''percent-encoded-value; also accept UTF-8" (single double-quote) from some proxies
+  const rfc5987Match = header.match(/filename\*\s*=\s*(?:UTF-8|utf-8)(?:''|")([^;]+)/i);
+  if (rfc5987Match) {
+    try {
+      return decodeURIComponent(rfc5987Match[1].trim());
+    } catch {
+      return null;
+    }
+  }
+  // Legacy: filename="..."
+  const legacyMatch = header.match(/filename\s*=\s*"([^"]*)"/);
+  if (legacyMatch) return legacyMatch[1];
+  // Legacy unquoted: filename=value
+  const unquotedMatch = header.match(/filename\s*=\s*([^;\s]+)/);
+  if (unquotedMatch) return unquotedMatch[1].replace(/^"|"$/g, "");
+  return null;
+}
+
 export default function CalendarPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -262,10 +283,7 @@ export default function CalendarPage() {
 
       const blob = await res.blob();
       const contentDisposition = res.headers.get("Content-Disposition");
-      const filenameMatch = contentDisposition?.match(/filename="?([^";\n]+)"?/);
-      const filename = filenameMatch?.[1]
-        ? decodeURIComponent(filenameMatch[1].replace(/^"/, "").replace(/"$/, ""))
-        : `work_log_${month}.pdf`;
+      const filename = parseContentDispositionFilename(contentDisposition) ?? `work_log_${month}.pdf`;
 
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");

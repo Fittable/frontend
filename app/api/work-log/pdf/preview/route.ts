@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
 
     const blob = await res.blob();
     const contentType = res.headers.get("Content-Type") ?? "application/pdf";
-    const contentDisposition = res.headers.get("Content-Disposition") ?? `inline; filename="work_log_${month}.pdf"`;
+    // Forward backend's Content-Disposition unchanged (may include RFC 5987 filename*=UTF-8''... for Korean filenames)
+    const contentDisposition =
+      res.headers.get("Content-Disposition") ?? `inline; filename="work_log_${month}.pdf"`;
 
     return new NextResponse(blob, {
       status: 200,
