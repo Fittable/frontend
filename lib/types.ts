@@ -17,6 +17,11 @@ export interface Shift {
   created_by: string;
   updated_at: string;
   name?: string | null;
+  task_name?: string | null;
+  segments?: {
+    start: string;
+    end: string;
+  }[];
 }
 
 export interface ShiftCreate {

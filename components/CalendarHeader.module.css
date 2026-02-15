@@ -72,7 +72,7 @@
 .right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .langToggle {
@@ -150,6 +150,28 @@
 .todayButton:hover {
   background: var(--bg-hover);
   border-color: var(--border-strong);
+}
+
+.downloadButton {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
+  border: 1px solid var(--accent-soft, rgba(59, 130, 246, 0.24));
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.downloadButton:hover:not(:disabled) {
+  background: var(--accent-soft-strong, rgba(59, 130, 246, 0.2));
+  border-color: var(--accent-text, #1d4ed8);
+}
+
+.downloadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .navGroup {

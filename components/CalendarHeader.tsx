@@ -11,12 +11,14 @@ interface CalendarHeaderProps {
   language: Language;
   viewMode: "month" | "week";
   viewScope: ViewScope;
+  downloadDisabled?: boolean;
   onViewModeChange: (mode: "month" | "week") => void;
   onViewScopeChange: (scope: ViewScope) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
   onMenuToggle: () => void;
+  onDownloadWorklog?: () => void;
 }
 
 export default function CalendarHeader({
@@ -24,12 +26,14 @@ export default function CalendarHeader({
   language,
   viewMode,
   viewScope,
+  downloadDisabled,
   onPrevMonth,
   onNextMonth,
   onToday,
   onViewModeChange,
   onViewScopeChange,
   onMenuToggle,
+  onDownloadWorklog,
 }: CalendarHeaderProps) {
   const monthLabel =
     language === "ko" ? getWorkMonthLabelKo(workMonth) : getWorkMonthLabel(workMonth);
@@ -69,6 +73,17 @@ export default function CalendarHeader({
       </div>
 
       <div className={styles.right}>
+        {onDownloadWorklog && (
+          <button
+            type="button"
+            className={styles.downloadButton}
+            onClick={onDownloadWorklog}
+            disabled={downloadDisabled}
+          >
+            이번달 근무일지 다운로드
+          </button>
+        )}
+
         {/* View mode toggle */}
         <div className={styles.viewToggle} aria-label="Calendar view">
           <button

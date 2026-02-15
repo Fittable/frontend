@@ -126,6 +126,24 @@
   border-color: var(--accent, #3b82f6);
 }
 
+.select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+  cursor: pointer;
+  appearance: auto;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+}
+
 .actions {
   display: flex;
   gap: 10px;

@@ -37,8 +37,8 @@ import styles from "./page.module.css";
 /** Parse filename from Content-Disposition header. Supports RFC 5987 (filename*=UTF-8''...) and legacy filename="...". */
 function parseContentDispositionFilename(header: string | null): string | null {
   if (!header) return null;
-  // RFC 5987: filename*=charset''percent-encoded-value; also accept UTF-8" (single double-quote) from some proxies
-  const rfc5987Match = header.match(/filename\*\s*=\s*(?:UTF-8|utf-8)(?:''|")([^;]+)/i);
+  // RFC 5987: filename*=charset''percent-encoded-value (preferred for non-ASCII)
+  const rfc5987Match = header.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/i);
   if (rfc5987Match) {
     try {
       return decodeURIComponent(rfc5987Match[1].trim());

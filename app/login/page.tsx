@@ -50,9 +50,11 @@ function LoginForm() {
       <div className={styles.card}>
         {/* Logo/Icon */}
         <div className={styles.logoWrapper}>
-          <div className={styles.logo}>
-            <CalendarIcon />
-          </div>
+          <img 
+            src="/fittable-logo.png" 
+            alt="Fittable" 
+            className={styles.logoImage}
+          />
         </div>
 
         <h1 className={styles.title}>{t(language, "login.title")}</h1>
@@ -108,21 +110,18 @@ function LoginForm() {
               <span>{t(language, "login.signIn")}</span>
             )}
           </button>
+
+          <p className={styles.agreement}>
+            *로그인 시{" "}
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1" target="_blank" rel="noopener noreferrer" className={styles.agreementLink}>이용약관</a>
+            {" "}및{" "}
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1" target="_blank" rel="noopener noreferrer" className={styles.agreementLink}>개인정보처리방침</a>
+            에 동의합니다.
+          </p>
         </form>
 
-        <div className={styles.divider}>
-          <span>{t(language, "login.demoCredentials")}</span>
-        </div>
-
-        <div className={styles.hints}>
-          <div className={styles.hint}>
-            <span className={styles.hintRole}>{t(language, "login.adminLabel")}</span>
-            <code>admin / admin1234</code>
-          </div>
-          <div className={styles.hint}>
-            <span className={styles.hintRole}>{t(language, "login.workerLabel")}</span>
-            <code>worker1 / worker1234</code>
-          </div>
+        <div className={styles.madeBy}>
+          <span>made with love by Universe ^^ </span>
         </div>
       </div>
 
@@ -140,7 +139,13 @@ export default function LoginPage() {
       <div className={styles.container}>
         <div className={styles.bgPattern} />
         <div className={styles.card}>
-          <div className={styles.logoWrapper}><div className={styles.logo} /></div>
+          <div className={styles.logoWrapper}>
+            <img 
+              src="/fittable-logo.png" 
+              alt="Fittable" 
+              className={styles.logoImage}
+            />
+          </div>
           <h1 className={styles.title}>{t("ko", "login.title")}</h1>
           <p className={styles.subtitle}>{t("ko", "login.subtitle")}</p>
           <div style={{ padding: "2rem", textAlign: "center" }}>Loading…</div>
@@ -149,18 +154,6 @@ export default function LoginPage() {
     }>
       <LoginForm />
     </Suspense>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-      <rect x="7" y="14" width="3" height="3" rx="0.5" fill="currentColor" />
-    </svg>
   );
 }
 
