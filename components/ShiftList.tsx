@@ -1,6 +1,7 @@
 "use client";
 
 import { Shift } from "@/lib/types";
+import { t, Language } from "@/lib/i18n";
 
 interface ShiftListProps {
   shifts: Shift[];
@@ -8,6 +9,7 @@ interface ShiftListProps {
   currentUserId: string;
   onEdit: (shift: Shift) => void;
   onDelete: (shiftId: string) => void;
+  language?: Language;
 }
 
 export default function ShiftList({
@@ -16,9 +18,10 @@ export default function ShiftList({
   currentUserId,
   onEdit,
   onDelete,
+  language = "ko",
 }: ShiftListProps) {
   if (shifts.length === 0) {
-    return <p style={styles.empty}>No shifts scheduled</p>;
+    return <p style={styles.empty}>{t(language, "shifts.none")}</p>;
   }
 
   const formatTime = (time: string) => {
@@ -46,7 +49,7 @@ export default function ShiftList({
           {canModify(shift) && (
             <div style={styles.actions}>
               <button onClick={() => onEdit(shift)} style={styles.editBtn}>
-                Edit
+                {t(language, "shifts.edit")}
               </button>
               <button
                 onClick={() => onDelete(shift.id)}

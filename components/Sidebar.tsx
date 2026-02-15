@@ -5,6 +5,8 @@ import { User, Shift } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
+import ProfileCard from "./ProfileCard";
+import { t, Language } from "@/lib/i18n";
 import styles from "./Sidebar.module.css";
 
 // Worker color palette
@@ -29,12 +31,14 @@ interface SidebarProps {
   shifts: Shift[];
   workMonth: WorkMonth;
   selectedDate: string | null;
+  language: Language;
   visibleWorkerIds: string[];
   onDateSelect: (date: Date) => void;
   onWorkerFilterChange: (workerIds: string[]) => void;
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
+  onLanguageChange: (lang: "ko" | "en") => void;
 }
 
 export default function Sidebar({
@@ -43,18 +47,22 @@ export default function Sidebar({
   shifts,
   workMonth,
   selectedDate,
+  language,
   visibleWorkerIds,
   onDateSelect,
   onWorkerFilterChange,
   onLogout,
   isOpen,
   onClose,
+  onLanguageChange,
 }: SidebarProps) {
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
+  const [profileImageError, setProfileImageError] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
 
   // Fetch hours for the current work month (25th to 24th)
-  // Re-fetch when shifts change (after create/update/delete)
+  // Re-fetch when shifts change (after create/update/delete); depend on shifts so edits (same length) also trigger refetch
   useEffect(() => {
     const fetchHours = async () => {
       try {
@@ -75,7 +83,7 @@ export default function Sidebar({
     };
 
     fetchHours();
-  }, [workMonth, shifts.length]);
+  }, [workMonth, shifts]);
 
   const handleAllWorkersToggle = () => {
     onWorkerFilterChange([]);
@@ -113,7 +121,7 @@ export default function Sidebar({
         {/* Worker Filter - Show for all users */}
         {workerList.length > 0 && (
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Workers</h3>
+            <h3 className={styles.sectionTitle}>{t(language, "sidebar.workers")}</h3>
             <div className={styles.filterList}>
               {/* All Workers option */}
               <label className={styles.filterItem}>
@@ -125,7 +133,9 @@ export default function Sidebar({
                   className={styles.filterRadio}
                 />
                 <span className={styles.filterDot} style={{ background: "var(--text-muted)" }} />
-                <span className={styles.filterLabel}>All Workers</span>
+                <span className={styles.filterLabel}>
+                  {t(language, "sidebar.allWorkers")}
+                </span>
               </label>
 
               {/* Individual workers */}
@@ -148,7 +158,7 @@ export default function Sidebar({
                       <span className={styles.hoursLabel}>{hours}h</span>
                     )}
                     {w.role === "admin" && (
-                      <span className={styles.adminBadge}>admin</span>
+                      <span className={styles.adminBadge}>{t(language, "common.admin")}</span>
                     )}
                   </label>
                 );
@@ -163,21 +173,80 @@ export default function Sidebar({
         {/* User Info */}
         <div className={styles.userSection}>
           <div className={styles.userInfo}>
-            <div className={styles.userAvatar}>
-              {(user.name || user.student_id).charAt(0).toUpperCase()}
+            <div className={styles.userMeta}>
+              <div className={styles.userAvatar}>
+                <span className={styles.userAvatarLetter}>
+                  {(user.name || user.student_id).charAt(0).toUpperCase()}
+                </span>
+                {!profileImageError && (
+                  <img
+                    src="/api/profile/image"
+                    alt=""
+                    className={styles.userAvatarImage}
+                    onError={() => setProfileImageError(true)}
+                  />
+                )}
+              </div>
+              <div className={styles.userDetails}>
+                <div className={styles.userNameRow}>
+                  <span className={styles.userName}>{user.name || user.student_id}</span>
+                  <button
+                    type="button"
+                    className={styles.settingsButton}
+                    onClick={() => setShowProfileCard(true)}
+                    aria-label={t(language, "profile.settings")}
+                    title={t(language, "profile.settings")}
+                  >
+                    <SettingsIcon />
+                  </button>
+                </div>
+                <span className={styles.userRole}>{user.role}</span>
+              </div>
             </div>
-            <div className={styles.userDetails}>
-              <span className={styles.userName}>{user.name || user.student_id}</span>
-              <span className={styles.userRole}>{user.role}</span>
+            <div className={styles.langToggle} aria-label="Language">
+              <button
+                type="button"
+                className={`${styles.langButton} ${
+                  language === "ko" ? styles.langButtonActive : ""
+                }`}
+                onClick={() => onLanguageChange("ko")}
+              >
+                한
+              </button>
+              <button
+                type="button"
+                className={`${styles.langButton} ${
+                  language === "en" ? styles.langButtonActive : ""
+                }`}
+                onClick={() => onLanguageChange("en")}
+              >
+                En
+              </button>
             </div>
           </div>
           <button onClick={onLogout} className={styles.logoutButton}>
             <LogoutIcon />
-            <span>Log out</span>
+            <span>{t(language, "common.logout")}</span>
           </button>
         </div>
       </aside>
+
+      {showProfileCard && (
+        <ProfileCard
+          language={language}
+          onClose={() => setShowProfileCard(false)}
+        />
+      )}
     </>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
   );
 }
 

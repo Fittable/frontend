@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = typeof data.detail === "string" ? data.detail : data.message ?? "Request failed";
+      return NextResponse.json({ detail }, { status: res.status });
+    }
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error("Shifts GET proxy error:", error);
@@ -48,7 +52,11 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const detail = typeof data.detail === "string" ? data.detail : data.message ?? "Failed to create shift";
+      return NextResponse.json({ detail }, { status: res.status });
+    }
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error("Shifts POST proxy error:", error);

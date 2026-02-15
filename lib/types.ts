@@ -17,6 +17,11 @@ export interface Shift {
   created_by: string;
   updated_at: string;
   name?: string | null;
+  task_name?: string | null;
+  segments?: {
+    start: string;
+    end: string;
+  }[];
 }
 
 export interface ShiftCreate {
@@ -48,7 +53,10 @@ export type LoginCredentials = LoginRequest;
 export interface LoginResponse {
   success: boolean;
   message: string;
+  /** KLAS session token – use only for endpoints that still expect it (e.g. /api/auth/me) */
   token: string | null;
+  /** JWT – use for shifts, users, holidays, and all other protected API routes */
+  access_token: string | null;
 }
 
 export interface ApiError {
@@ -112,4 +120,60 @@ export interface UserMe {
   name: string | null;
   role: string;
   status: string;
+}
+
+/** Timetable: course schedule from KLAS / backend */
+export interface TimetableSchedule {
+  day: string;
+  day_num: number;
+  start_time: string;
+  end_time: string;
+  location: string;
+  professor: string;
+}
+
+export interface TimetableCourse {
+  course_title: string;
+  course_code: string;
+  schedules: TimetableSchedule[];
+}
+
+export interface TimetableResponse {
+  success: boolean;
+  courses: Record<string, TimetableCourse>;
+  message: string | null;
+}
+
+/** One course occurrence on a specific date (for calendar display) */
+export interface CourseEvent {
+  date: string;
+  start_time: string;
+  end_time: string;
+  course_title: string;
+  course_code: string;
+  location: string;
+  professor: string;
+}
+
+/** Profile settings from GET /api/profile/settings */
+export interface ProfileSettings {
+  name: string | null;
+  student_id: string;
+  major: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  nationality: string | null;
+  profile_image: string | null;
+  room_no: string | null;
+  nickname: string | null;
+  dept_name: string | null;
+  work_category: string | null;
+}
+
+/** Editable fields for PATCH /api/profile/settings */
+export interface ProfileSettingsUpdate {
+  room_no?: string | null;
+  nickname?: string | null;
+  dept_name?: string | null;
+  work_category?: string | null;
 }
