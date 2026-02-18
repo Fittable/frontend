@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Shift } from "@/lib/types";
+import { User, Shift, DisplayNamePreference } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
 import ProfileCard from "./ProfileCard";
 import { t, Language } from "@/lib/i18n";
+import { getDisplayName } from "@/lib/types";
 import styles from "./Sidebar.module.css";
 
 // Worker color palette
@@ -39,6 +40,8 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onLanguageChange: (lang: "ko" | "en") => void;
+  displayNamePreference?: DisplayNamePreference;
+  onDisplayNamePreferenceChange?: (pref: DisplayNamePreference) => void;
 }
 
 export default function Sidebar({
@@ -55,6 +58,8 @@ export default function Sidebar({
   isOpen,
   onClose,
   onLanguageChange,
+  displayNamePreference = "nickname",
+  onDisplayNamePreferenceChange,
 }: SidebarProps) {
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
@@ -153,7 +158,7 @@ export default function Sidebar({
                       className={styles.filterCheckbox}
                     />
                     <span className={styles.filterDot} style={{ background: color }} />
-                    <span className={styles.filterLabel}>{w.name || w.student_id}</span>
+                    <span className={styles.filterLabel}>{getDisplayName(w, displayNamePreference)}</span>
                     {hours !== undefined && hours > 0 && (
                       <span className={styles.hoursLabel}>{hours}h</span>
                     )}
@@ -176,7 +181,7 @@ export default function Sidebar({
             <div className={styles.userMeta}>
               <div className={styles.userAvatar}>
                 <span className={styles.userAvatarLetter}>
-                  {(user.name || user.student_id).charAt(0).toUpperCase()}
+                  {getDisplayName(user, displayNamePreference).charAt(0).toUpperCase()}
                 </span>
                 {!profileImageError && (
                   <img
@@ -189,7 +194,7 @@ export default function Sidebar({
               </div>
               <div className={styles.userDetails}>
                 <div className={styles.userNameRow}>
-                  <span className={styles.userName}>{user.name || user.student_id}</span>
+                  <span className={styles.userName}>{getDisplayName(user, displayNamePreference)}</span>
                   <button
                     type="button"
                     className={styles.settingsButton}
@@ -216,6 +221,8 @@ export default function Sidebar({
           language={language}
           onClose={() => setShowProfileCard(false)}
           onLanguageChange={onLanguageChange}
+          displayNamePreference={displayNamePreference}
+          onDisplayNamePreferenceChange={onDisplayNamePreferenceChange}
         />
       )}
     </>

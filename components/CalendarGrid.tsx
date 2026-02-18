@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User, Holiday, CourseEvent } from "@/lib/types";
+import { Shift, User, Holiday, CourseEvent, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonthStartDate,
@@ -19,6 +19,8 @@ interface CalendarGridProps {
   holidays: Holiday[];
   selectedDate: string | null;
   language: Language;
+  displayNamePreference?: DisplayNamePreference;
+  isMobile?: boolean;
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
@@ -31,7 +33,14 @@ type UserShifts = {
   shifts: Shift[];
 };
 
-function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
+function groupShiftsByUser(
+  shifts: Shift[],
+  users: User[],
+  displayNamePreference: DisplayNamePreference = "nickname"
+): UserShifts[] {
+  const userMap = new Map<string, User>();
+  users.forEach((u) => userMap.set(u.id, u));
+
   const grouped = new Map<string, UserShifts>();
 
   shifts.forEach((shift) => {
@@ -39,9 +48,11 @@ function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
     if (existing) {
       existing.shifts.push(shift);
     } else {
+      const user = userMap.get(shift.user_id);
+      const displayName = user ? getDisplayName(user, displayNamePreference) : (shift.name || "Unknown");
       grouped.set(shift.user_id, {
         userId: shift.user_id,
-        name: shift.name || "Unknown",
+        name: displayName,
         shifts: [shift],
       });
     }
@@ -64,6 +75,8 @@ export default function CalendarGrid({
   holidays,
   selectedDate,
   language,
+  displayNamePreference = "nickname",
+  isMobile = false,
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
@@ -109,13 +122,30 @@ export default function CalendarGrid({
   // Convert to Monday-start (Mon=0, Tue=1, ..., Sun=6)
   startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-  // Add empty cells for padding at start
-  const paddingBefore = startDayOfWeek;
+  // On mobile, only show Mon-Fri (5 days), so adjust padding
+  const daysPerWeek = isMobile ? 5 : 7;
+  
+  // Filter out weekends from dates array for mobile
+  const datesToShow = isMobile 
+    ? dates.filter(date => {
+        const dayOfWeek = date.getDay();
+        return dayOfWeek !== 0 && dayOfWeek !== 6; // Exclude Sunday (0) and Saturday (6)
+      })
+    : dates;
+  
+  // Calculate padding: on mobile, pad to Monday (0), skip weekends
+  let paddingBefore = 0;
+  if (isMobile) {
+    // On mobile, pad to Monday only (no padding needed if start is Monday)
+    paddingBefore = startDayOfWeek > 4 ? 0 : startDayOfWeek; // If Sat/Sun, no padding
+  } else {
+    paddingBefore = startDayOfWeek;
+  }
   
   // Calculate total cells needed (round up to complete weeks)
-  const totalDays = dates.length + paddingBefore;
-  const totalWeeks = Math.ceil(totalDays / 7);
-  const totalCells = totalWeeks * 7;
+  const totalDays = datesToShow.length + paddingBefore;
+  const totalWeeks = Math.ceil(totalDays / daysPerWeek);
+  const totalCells = totalWeeks * daysPerWeek;
   const paddingAfter = totalCells - totalDays;
 
   // Group shifts by date
@@ -131,17 +161,20 @@ export default function CalendarGrid({
   const todayStr = formatDateStr(today);
 
   // Weekday headers (Monday start)
-  const weekDays =
+  const allWeekDays =
     language === "ko"
       ? ["월", "화", "수", "목", "금", "토", "일"]
       : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  
+  // On mobile, only show Mon-Fri
+  const weekDays = isMobile ? allWeekDays.slice(0, 5) : allWeekDays;
 
   const formatTime = (time: string) => time.slice(0, 5);
 
   return (
     <div className={styles.container}>
       {/* Weekday headers */}
-      <div className={styles.header}>
+      <div className={`${styles.header} ${isMobile ? styles.mobileHeader : ""}`}>
         {weekDays.map((day, i) => (
           <div
             key={day}
@@ -154,7 +187,7 @@ export default function CalendarGrid({
 
       {/* Calendar grid */}
       <div 
-        className={styles.grid}
+        className={`${styles.grid} ${isMobile ? styles.mobileGrid : ""}`}
         style={{ gridTemplateRows: `repeat(${totalWeeks}, 1fr)` }}
       >
         {/* Padding cells before */}
@@ -163,15 +196,22 @@ export default function CalendarGrid({
         ))}
 
         {/* Actual date cells */}
-        {dates.map((date, idx) => {
+        {datesToShow.map((date, idx) => {
           const dateStr = formatDateStr(date);
           const dayShifts = shiftsByDate.get(dateStr) || [];
           const dayCourses = courseEventsByDate.get(dateStr) || [];
-          const groupedShifts = groupShiftsByUser(dayShifts);
+          const groupedShifts = groupShiftsByUser(dayShifts, users, displayNamePreference);
           const isSelected = dateStr === selectedDate;
           const isToday = dateStr === todayStr;
-          const dayOfWeek = (paddingBefore + idx) % 7;
-          const isWeekend = dayOfWeek >= 5;
+          
+          // Calculate day of week: 0=Sun, 1=Mon, ..., 6=Sat
+          const actualDayOfWeek = date.getDay();
+          const isWeekend = actualDayOfWeek === 0 || actualDayOfWeek === 6;
+          
+          // Calculate grid position (Mon=0, Tue=1, ..., Fri=4 for mobile)
+          const dayOfWeek = isMobile 
+            ? actualDayOfWeek - 1 // Mon=0, Tue=1, ..., Fri=4
+            : (actualDayOfWeek === 0 ? 6 : actualDayOfWeek - 1); // Mon=0, ..., Sun=6
 
           // Check if this date is in the first month or second month of work period
           const isFirstMonth = date.getMonth() === workMonth.startMonth;

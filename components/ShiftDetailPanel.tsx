@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User } from "@/lib/types";
+import { Shift, User, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import { getWorkerColor } from "./Sidebar";
 import { t, Language } from "@/lib/i18n";
 import styles from "./ShiftDetailPanel.module.css";
@@ -12,6 +12,7 @@ interface ShiftDetailPanelProps {
   isAdmin: boolean;
   currentUserId: string;
   language?: Language;
+  displayNamePreference?: DisplayNamePreference;
   onAddShift: () => void;
   onEditShift: (shift: Shift) => void;
   onDeleteShift: (shiftId: string) => void;
@@ -25,23 +26,31 @@ type UserShifts = {
   shifts: Shift[];
 };
 
-function groupShiftsByUser(shifts: Shift[]): UserShifts[] {
+function groupShiftsByUser(
+  shifts: Shift[],
+  users: User[],
+  displayNamePreference: DisplayNamePreference = "nickname"
+): UserShifts[] {
+  const userMap = new Map<string, User>();
+  users.forEach((u) => userMap.set(u.id, u));
+
   const grouped = new Map<string, UserShifts>();
-  
+
   shifts.forEach((shift) => {
     const existing = grouped.get(shift.user_id);
     if (existing) {
       existing.shifts.push(shift);
     } else {
+      const user = userMap.get(shift.user_id);
+      const displayName = user ? getDisplayName(user, displayNamePreference) : (shift.name || "Unknown");
       grouped.set(shift.user_id, {
         userId: shift.user_id,
-        name: shift.name || "Unknown",
+        name: displayName,
         shifts: [shift],
       });
     }
   });
 
-  // Sort shifts within each user by start time
   grouped.forEach((userShifts) => {
     userShifts.shifts.sort((a, b) => a.start_time.localeCompare(b.start_time));
   });
@@ -56,6 +65,7 @@ export default function ShiftDetailPanel({
   isAdmin,
   currentUserId,
   language = "ko",
+  displayNamePreference = "nickname",
   onAddShift,
   onEditShift,
   onDeleteShift,
@@ -76,7 +86,7 @@ export default function ShiftDetailPanel({
 
   const formatTime = (time: string) => time.slice(0, 5);
 
-  const groupedShifts = groupShiftsByUser(shifts);
+  const groupedShifts = groupShiftsByUser(shifts, users, displayNamePreference);
 
   const canModify = (userId: string) => {
     return isAdmin || userId === currentUserId;

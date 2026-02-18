@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { ProfileSettings, ProfileSettingsUpdate } from "@/lib/types";
+import { ProfileSettings, ProfileSettingsUpdate, DisplayNamePreference } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
 import styles from "./ProfileCard.module.css";
 
@@ -28,6 +28,8 @@ interface ProfileCardProps {
   onClose: () => void;
   onProfileUpdated?: (profile: ProfileSettings) => void;
   onLanguageChange?: (lang: Language) => void;
+  displayNamePreference?: DisplayNamePreference;
+  onDisplayNamePreferenceChange?: (pref: DisplayNamePreference) => void;
 }
 
 export default function ProfileCard({
@@ -35,6 +37,8 @@ export default function ProfileCard({
   onClose,
   onProfileUpdated,
   onLanguageChange,
+  displayNamePreference = "nickname",
+  onDisplayNamePreferenceChange,
 }: ProfileCardProps) {
   const [profile, setProfile] = useState<ProfileSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -247,6 +251,28 @@ export default function ProfileCard({
                   onClick={() => onLanguageChange("en")}
                 >
                   En
+                </button>
+              </div>
+            </div>
+          )}
+
+          {onDisplayNamePreferenceChange && (
+            <div className={styles.row}>
+              <span className={styles.label}>{t(language, "profile.displayNamePreference")}</span>
+              <div className={styles.langToggle} aria-label="Display name preference">
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${displayNamePreference === "nickname" ? styles.langButtonActive : ""}`}
+                  onClick={() => onDisplayNamePreferenceChange("nickname")}
+                >
+                  {t(language, "profile.displayNickname")}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${displayNamePreference === "fullName" ? styles.langButtonActive : ""}`}
+                  onClick={() => onDisplayNamePreferenceChange("fullName")}
+                >
+                  {t(language, "profile.displayFullName")}
                 </button>
               </div>
             </div>

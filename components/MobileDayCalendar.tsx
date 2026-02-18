@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User, Holiday, CourseEvent } from "@/lib/types";
+import { Shift, User, Holiday, CourseEvent, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import { WorkMonth, getWorkMonthStartDate, getWorkMonthEndDate, formatDateStr } from "@/lib/workMonth";
 import { Language } from "@/lib/i18n";
 import { getWorkerColor } from "./Sidebar";
@@ -14,6 +14,7 @@ interface MobileDayCalendarProps {
   holidays: Holiday[];
   selectedDate: string | null;
   language: Language;
+  displayNamePreference?: DisplayNamePreference;
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
@@ -37,6 +38,7 @@ export default function MobileDayCalendar({
   holidays,
   selectedDate,
   language,
+  displayNamePreference = "nickname",
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
@@ -44,8 +46,10 @@ export default function MobileDayCalendar({
   onNextWeek,
 }: MobileDayCalendarProps) {
   const userIndexMap = new Map<string, number>();
+  const displayNameMap = new Map<string, string>();
   users.forEach((u, idx) => {
     userIndexMap.set(u.id, idx);
+    displayNameMap.set(u.id, getDisplayName(u, displayNamePreference));
   });
 
   const holidayMap = new Map<string, Holiday>();
@@ -278,7 +282,7 @@ export default function MobileDayCalendar({
                           <span className={styles.eventTime}>
                             {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
                           </span>
-                          <span className={styles.eventTitle}>{shift.name || "Unknown"}</span>
+                          <span className={styles.eventTitle}>{displayNameMap.get(shift.user_id) ?? shift.name ?? "Unknown"}</span>
                         </button>
                       );
                     } else {

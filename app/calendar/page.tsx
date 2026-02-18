@@ -11,6 +11,7 @@ import {
   TimetableResponse,
   CourseEvent,
   ProfileSettings,
+  DisplayNamePreference,
 } from "@/lib/types";
 import {
   WorkMonth,
@@ -30,6 +31,9 @@ import Sidebar from "@/components/Sidebar";
 import CalendarHeader from "@/components/CalendarHeader";
 import CalendarGrid from "@/components/CalendarGrid";
 import WeeklyCalendarGrid from "../../components/WeeklyCalendarGrid";
+import MobileDayCalendar from "@/components/MobileDayCalendar";
+import MobileFilterPanel from "@/components/MobileFilterPanel";
+import MobileShiftDetailPanel from "@/components/MobileShiftDetailPanel";
 import ShiftDetailPanel from "@/components/ShiftDetailPanel";
 import ShiftEditorModal from "@/components/ShiftEditorModal";
 import styles from "./page.module.css";
@@ -55,6 +59,14 @@ function parseContentDispositionFilename(header: string | null): string | null {
   return null;
 }
 
+const DISPLAY_NAME_KEY = "fittable_displayNamePreference";
+
+function getInitialDisplayNamePreference(): DisplayNamePreference {
+  if (typeof window === "undefined") return "nickname";
+  const stored = localStorage.getItem(DISPLAY_NAME_KEY);
+  return stored === "fullName" ? "fullName" : "nickname";
+}
+
 export default function CalendarPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -70,10 +82,16 @@ export default function CalendarPage() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mobileShiftPanelOpen, setMobileShiftPanelOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [timetable, setTimetable] = useState<TimetableResponse | null>(null);
   const [profile, setProfile] = useState<ProfileSettings | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [displayNamePreference, setDisplayNamePreference] = useState<DisplayNamePreference>(
+    () => getInitialDisplayNamePreference()
+  );
 
   const loadShifts = useCallback(async () => {
     try {
@@ -218,6 +236,28 @@ export default function CalendarPage() {
     return () => clearInterval(interval);
   }, [user, loadShifts]);
 
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Sync display name preference from localStorage on mount
+  useEffect(() => {
+    setDisplayNamePreference(getInitialDisplayNamePreference());
+  }, []);
+
+  const handleDisplayNamePreferenceChange = (pref: DisplayNamePreference) => {
+    setDisplayNamePreference(pref);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(DISPLAY_NAME_KEY, pref);
+    }
+  };
+
   const handleLogout = async () => {
     await api.logout();
     router.push("/login");
@@ -338,12 +378,20 @@ export default function CalendarPage() {
 
   const handleDayClick = (dateStr: string) => {
     setSelectedDate(dateStr);
+    if (isMobile) {
+      setMobileShiftPanelOpen(true);
+    }
   };
 
   const handleDayDoubleClick = (dateStr: string) => {
     setSelectedDate(dateStr);
     setEditingShift(null);
-    setShowModal(true);
+    if (isMobile) {
+      // On mobile, open shift detail panel which has add button
+      setMobileShiftPanelOpen(true);
+    } else {
+      setShowModal(true);
+    }
   };
 
   const handleAddShift = () => {
@@ -358,8 +406,14 @@ export default function CalendarPage() {
 
   const handleShiftClick = (shift: Shift) => {
     setSelectedDate(shift.date);
-    setEditingShift(shift);
-    setShowModal(true);
+    if (isMobile) {
+      // On mobile, open the shift detail panel
+      setMobileShiftPanelOpen(true);
+    } else {
+      // On desktop, open edit modal directly
+      setEditingShift(shift);
+      setShowModal(true);
+    }
   };
 
   const handleDeleteShift = async (shiftId: string) => {
@@ -444,6 +498,8 @@ export default function CalendarPage() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onLanguageChange={setLanguage}
+        displayNamePreference={displayNamePreference}
+        onDisplayNamePreferenceChange={handleDisplayNamePreferenceChange}
       />
 
       {/* Main Content */}
@@ -454,6 +510,7 @@ export default function CalendarPage() {
           language={language}
           viewMode={viewMode}
           viewScope={viewScope}
+          selectedDate={selectedDate}
           downloadDisabled={downloadingPdf}
           onViewModeChange={setViewMode}
           onViewScopeChange={setViewScope}
@@ -462,13 +519,30 @@ export default function CalendarPage() {
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           onDownloadWorklog={handleDownloadWorklog}
+          onLanguageChange={setLanguage}
         />
 
         {/* Calendar and Panel Container */}
         <div className={styles.content}>
           {/* Calendar Grid */}
           <div className={styles.calendarContainer}>
-            {viewMode === "month" ? (
+            {isMobile && viewMode === "week" ? (
+              <MobileDayCalendar
+                workMonth={workMonth}
+                shifts={filteredShifts}
+                courseEvents={courseEvents}
+                users={users}
+                holidays={holidays}
+                selectedDate={selectedDate}
+                language={language}
+                displayNamePreference={displayNamePreference}
+                onDayClick={handleDayClick}
+                onShiftClick={handleShiftClick}
+                onDayDoubleClick={handleDayDoubleClick}
+                onPrevWeek={handlePrevWeek}
+                onNextWeek={handleNextWeek}
+              />
+            ) : isMobile && viewMode === "month" ? (
               <CalendarGrid
                 workMonth={workMonth}
                 shifts={filteredShifts}
@@ -477,6 +551,23 @@ export default function CalendarPage() {
                 holidays={holidays}
                 selectedDate={selectedDate}
                 language={language}
+                displayNamePreference={displayNamePreference}
+                isMobile={true}
+                onDayClick={handleDayClick}
+                onShiftClick={handleShiftClick}
+                onDayDoubleClick={handleDayDoubleClick}
+              />
+            ) : viewMode === "month" ? (
+              <CalendarGrid
+                workMonth={workMonth}
+                shifts={filteredShifts}
+                courseEvents={courseEvents}
+                users={users}
+                holidays={holidays}
+                selectedDate={selectedDate}
+                language={language}
+                displayNamePreference={displayNamePreference}
+                isMobile={false}
                 onDayClick={handleDayClick}
                 onShiftClick={handleShiftClick}
                 onDayDoubleClick={handleDayDoubleClick}
@@ -490,6 +581,7 @@ export default function CalendarPage() {
                 holidays={holidays}
                 selectedDate={selectedDate}
                 language={language}
+                displayNamePreference={displayNamePreference}
                 onDayClick={handleDayClick}
                 onShiftClick={handleShiftClick}
                 onDayDoubleClick={handleDayDoubleClick}
@@ -497,14 +589,15 @@ export default function CalendarPage() {
             )}
           </div>
 
-          {/* Shift Detail Panel */}
-          {selectedDate && (
+          {/* Shift Detail Panel - hidden on mobile */}
+          {selectedDate && !isMobile && (
             <ShiftDetailPanel
               selectedDate={selectedDate}
               shifts={shiftsForDate}
               users={users}
               isAdmin={user.role === "admin"}
               currentUserId={user.id}
+              displayNamePreference={displayNamePreference}
               onAddShift={handleAddShift}
               onEditShift={handleEditShift}
               onDeleteShift={handleDeleteShift}
@@ -512,6 +605,52 @@ export default function CalendarPage() {
             />
           )}
         </div>
+
+        {/* Mobile Filter Panel */}
+        {isMobile && (
+          <MobileFilterPanel
+            users={users}
+            visibleWorkerIds={visibleWorkerIds}
+            language={language}
+            displayNamePreference={displayNamePreference}
+            isOpen={mobileFilterOpen}
+            onWorkerFilterChange={setVisibleWorkerIds}
+            onClose={() => setMobileFilterOpen(false)}
+          />
+        )}
+
+        {/* Mobile Shift Detail Panel */}
+        {isMobile && (
+          <MobileShiftDetailPanel
+            selectedDate={selectedDate}
+            shifts={shiftsForDate}
+            users={users}
+            isAdmin={user.role === "admin"}
+            currentUserId={user.id}
+            language={language}
+            displayNamePreference={displayNamePreference}
+            isOpen={mobileShiftPanelOpen}
+            onAddShift={handleAddShift}
+            onEditShift={(shift) => {
+              setEditingShift(shift);
+              setMobileShiftPanelOpen(false);
+              setShowModal(true);
+            }}
+            onDeleteShift={handleDeleteShift}
+            onClose={() => setMobileShiftPanelOpen(false)}
+          />
+        )}
+
+        {/* Mobile filter button */}
+        {isMobile && (
+          <button
+            className={styles.mobileFilterButton}
+            onClick={() => setMobileFilterOpen(true)}
+            aria-label="Filter workers"
+          >
+            근로학생
+          </button>
+        )}
       </main>
 
       {/* Modal */}
@@ -523,6 +662,7 @@ export default function CalendarPage() {
           users={users}
           isAdmin={user.role === "admin"}
           currentUserId={user.id}
+          displayNamePreference={displayNamePreference}
           onSave={handleSaveShift}
           onClose={() => setShowModal(false)}
         />

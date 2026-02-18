@@ -1,6 +1,6 @@
 "use client";
 
-import { Shift, User, Holiday, CourseEvent } from "@/lib/types";
+import { Shift, User, Holiday, CourseEvent, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import {
   WorkMonth,
   getWorkMonthStartDate,
@@ -19,6 +19,7 @@ interface WeeklyCalendarGridProps {
   holidays: Holiday[];
   selectedDate: string | null;
   language: Language;
+  displayNamePreference?: DisplayNamePreference;
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
@@ -77,13 +78,16 @@ export default function WeeklyCalendarGrid({
   holidays,
   selectedDate,
   language,
+  displayNamePreference = "nickname",
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
 }: WeeklyCalendarGridProps) {
   const userIndexMap = new Map<string, number>();
+  const displayNameMap = new Map<string, string>();
   users.forEach((u, idx) => {
     userIndexMap.set(u.id, idx);
+    displayNameMap.set(u.id, getDisplayName(u, displayNamePreference));
   });
 
   const holidayMap = new Map<string, Holiday>();
@@ -319,10 +323,10 @@ export default function WeeklyCalendarGrid({
                                       e.stopPropagation();
                                       onShiftClick(shift);
                                     }}
-                                    title={`${shift.name || "Unknown"} · ${shift.start_time.slice(0, 5)}–${shift.end_time.slice(0, 5)}`}
+                                    title={`${displayNameMap.get(shift.user_id) || shift.name || "Unknown"} · ${shift.start_time.slice(0, 5)}–${shift.end_time.slice(0, 5)}`}
                                   >
                                     <span className={styles.shiftBlockTitle}>
-                                      {shift.name || "Unknown"}
+                                      {displayNameMap.get(shift.user_id) || shift.name || "Unknown"}
                                     </span>
                                     <span className={styles.shiftBlockTime}>
                                       {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
@@ -428,13 +432,13 @@ export default function WeeklyCalendarGrid({
                                       e.stopPropagation();
                                       onShiftClick(shift);
                                     }}
-                                    title={`${shift.name || "Unknown"} · ${shift.start_time.slice(
+                                    title={`${displayNameMap.get(shift.user_id) || shift.name || "Unknown"} · ${shift.start_time.slice(
                                       0,
                                       5
                                     )}–${shift.end_time.slice(0, 5)}`}
                                   >
                                     <span className={styles.shiftBlockTitle}>
-                                      {shift.name || "Unknown"}
+                                      {displayNameMap.get(shift.user_id) || shift.name || "Unknown"}
                                     </span>
                                     <span className={styles.shiftBlockTime}>
                                       {shift.start_time.slice(0, 5)} – {shift.end_time.slice(0, 5)}
