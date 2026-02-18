@@ -27,12 +27,14 @@ interface ProfileCardProps {
   language: Language;
   onClose: () => void;
   onProfileUpdated?: (profile: ProfileSettings) => void;
+  onLanguageChange?: (lang: Language) => void;
 }
 
 export default function ProfileCard({
   language,
   onClose,
   onProfileUpdated,
+  onLanguageChange,
 }: ProfileCardProps) {
   const [profile, setProfile] = useState<ProfileSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -227,6 +229,28 @@ export default function ProfileCard({
               ))}
             </select>
           </div>
+
+          {onLanguageChange && (
+            <div className={styles.row}>
+              <span className={styles.label}>{t(language, "profile.language")}</span>
+              <div className={styles.langToggle} aria-label="Language">
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${language === "ko" ? styles.langButtonActive : ""}`}
+                  onClick={() => onLanguageChange("ko")}
+                >
+                  한
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${language === "en" ? styles.langButtonActive : ""}`}
+                  onClick={() => onLanguageChange("en")}
+                >
+                  En
+                </button>
+              </div>
+            </div>
+          )}
 
           {saveError && <div className={styles.error} style={{ marginTop: 12 }}>{saveError}</div>}
 

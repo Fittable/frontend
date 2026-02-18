@@ -203,26 +203,6 @@ export default function Sidebar({
                 <span className={styles.userRole}>{user.role}</span>
               </div>
             </div>
-            <div className={styles.langToggle} aria-label="Language">
-              <button
-                type="button"
-                className={`${styles.langButton} ${
-                  language === "ko" ? styles.langButtonActive : ""
-                }`}
-                onClick={() => onLanguageChange("ko")}
-              >
-                한
-              </button>
-              <button
-                type="button"
-                className={`${styles.langButton} ${
-                  language === "en" ? styles.langButtonActive : ""
-                }`}
-                onClick={() => onLanguageChange("en")}
-              >
-                En
-              </button>
-            </div>
           </div>
           <button onClick={onLogout} className={styles.logoutButton}>
             <LogoutIcon />
@@ -235,6 +215,7 @@ export default function Sidebar({
         <ProfileCard
           language={language}
           onClose={() => setShowProfileCard(false)}
+          onLanguageChange={onLanguageChange}
         />
       )}
     </>

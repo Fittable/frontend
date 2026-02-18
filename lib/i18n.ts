@@ -66,6 +66,7 @@ export type TranslationKey =
   | "profile.nickname"
   | "profile.deptName"
   | "profile.workCategory"
+  | "profile.language"
   | "profile.save"
   | "profile.saving"
   | "profile.loading"
@@ -143,6 +144,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.nickname": "닉네임",
     "profile.deptName": "대학",
     "profile.workCategory": "구분",
+    "profile.language": "언어",
     "profile.save": "저장",
     "profile.saving": "저장 중...",
     "profile.loading": "불러오는 중...",
@@ -219,6 +221,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.nickname": "Nickname",
     "profile.deptName": "Department",
     "profile.workCategory": "Category",
+    "profile.language": "Language",
     "profile.save": "Save",
     "profile.saving": "Saving...",
     "profile.loading": "Loading...",
