@@ -77,9 +77,10 @@ export default function ProfileCard({
     setSaving(true);
     setSaveError(null);
     const payload: ProfileSettingsUpdate = {
-      room_no: roomNo || null,
-      nickname: nickname || null,
-      dept_name: deptName || null,
+      room_no: roomNo?.trim() || null,
+      // Use empty string to clear; some backends reject null for optional string fields
+      nickname: nickname.trim() || "",
+      dept_name: deptName?.trim() || null,
       work_category: workCategory || null,
     };
     try {

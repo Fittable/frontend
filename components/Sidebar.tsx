@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Shift, DisplayNamePreference } from "@/lib/types";
+import { User, Shift, DisplayNamePreference, ProfileSettings } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
 import MiniCalendar from "./MiniCalendar";
@@ -42,6 +42,7 @@ interface SidebarProps {
   onLanguageChange: (lang: "ko" | "en") => void;
   displayNamePreference?: DisplayNamePreference;
   onDisplayNamePreferenceChange?: (pref: DisplayNamePreference) => void;
+  onProfileUpdated?: (profile: ProfileSettings) => void;
 }
 
 export default function Sidebar({
@@ -60,6 +61,7 @@ export default function Sidebar({
   onLanguageChange,
   displayNamePreference = "nickname",
   onDisplayNamePreferenceChange,
+  onProfileUpdated,
 }: SidebarProps) {
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
@@ -223,6 +225,7 @@ export default function Sidebar({
           onLanguageChange={onLanguageChange}
           displayNamePreference={displayNamePreference}
           onDisplayNamePreferenceChange={onDisplayNamePreferenceChange}
+          onProfileUpdated={onProfileUpdated}
         />
       )}
     </>

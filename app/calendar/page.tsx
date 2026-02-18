@@ -258,6 +258,19 @@ export default function CalendarPage() {
     }
   };
 
+  const handleProfileUpdated = (updated: ProfileSettings) => {
+    setProfile(updated);
+    // Update current user's nickname so UI reflects immediately
+    setUser((prev) =>
+      prev ? { ...prev, nickname: updated.nickname } : null
+    );
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === user?.id ? { ...u, nickname: updated.nickname } : u
+      )
+    );
+  };
+
   const handleLogout = async () => {
     await api.logout();
     router.push("/login");
@@ -500,6 +513,7 @@ export default function CalendarPage() {
         onLanguageChange={setLanguage}
         displayNamePreference={displayNamePreference}
         onDisplayNamePreferenceChange={handleDisplayNamePreferenceChange}
+        onProfileUpdated={handleProfileUpdated}
       />
 
       {/* Main Content */}
