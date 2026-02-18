@@ -2,6 +2,7 @@ export interface User {
   id: string;
   student_id: string;
   name: string | null;
+  nickname?: string | null;
   role: "admin" | "worker";
   created_at?: string;
   status?: string;
@@ -176,4 +177,17 @@ export interface ProfileSettingsUpdate {
   nickname?: string | null;
   dept_name?: string | null;
   work_category?: string | null;
+}
+
+export type DisplayNamePreference = "nickname" | "fullName";
+
+/** Returns display name for a user. When preferFullName, skips nickname and uses name/student_id. */
+export function getDisplayName(
+  user: { nickname?: string | null; name?: string | null; student_id: string },
+  preference: DisplayNamePreference = "nickname"
+): string {
+  if (preference === "fullName") {
+    return user.name || user.student_id || "Unknown";
+  }
+  return (user.nickname && user.nickname.trim()) || user.name || user.student_id || "Unknown";
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
-import { Shift, User } from "@/lib/types";
+import { Shift, User, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
 import styles from "./ShiftEditorModal.module.css";
 
@@ -15,6 +15,7 @@ interface ShiftEditorModalProps {
   isAdmin: boolean;
   currentUserId: string;
   language?: Language;
+  displayNamePreference?: DisplayNamePreference;
   onSave: () => void;
   onClose: () => void;
 }
@@ -39,6 +40,7 @@ export default function ShiftEditorModal({
   isAdmin,
   currentUserId,
   language = "ko",
+  displayNamePreference = "nickname",
   onSave,
   onClose,
 }: ShiftEditorModalProps) {
@@ -310,7 +312,7 @@ export default function ShiftEditorModal({
               >
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name || u.student_id} {u.role === "admin" ? "(admin)" : ""}
+                    {getDisplayName(u, displayNamePreference)} {u.role === "admin" ? "(admin)" : ""}
                   </option>
                 ))}
               </select>

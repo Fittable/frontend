@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { ProfileSettings, ProfileSettingsUpdate } from "@/lib/types";
+import { ProfileSettings, ProfileSettingsUpdate, DisplayNamePreference } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
 import styles from "./ProfileCard.module.css";
 
@@ -27,12 +27,18 @@ interface ProfileCardProps {
   language: Language;
   onClose: () => void;
   onProfileUpdated?: (profile: ProfileSettings) => void;
+  onLanguageChange?: (lang: Language) => void;
+  displayNamePreference?: DisplayNamePreference;
+  onDisplayNamePreferenceChange?: (pref: DisplayNamePreference) => void;
 }
 
 export default function ProfileCard({
   language,
   onClose,
   onProfileUpdated,
+  onLanguageChange,
+  displayNamePreference = "nickname",
+  onDisplayNamePreferenceChange,
 }: ProfileCardProps) {
   const [profile, setProfile] = useState<ProfileSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,9 +77,10 @@ export default function ProfileCard({
     setSaving(true);
     setSaveError(null);
     const payload: ProfileSettingsUpdate = {
-      room_no: roomNo || null,
-      nickname: nickname || null,
-      dept_name: deptName || null,
+      room_no: roomNo?.trim() || null,
+      // Use empty string to clear; some backends reject null for optional string fields
+      nickname: nickname.trim() || "",
+      dept_name: deptName?.trim() || null,
       work_category: workCategory || null,
     };
     try {
@@ -227,6 +234,50 @@ export default function ProfileCard({
               ))}
             </select>
           </div>
+
+          {onLanguageChange && (
+            <div className={styles.row}>
+              <span className={styles.label}>{t(language, "profile.language")}</span>
+              <div className={styles.langToggle} aria-label="Language">
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${language === "ko" ? styles.langButtonActive : ""}`}
+                  onClick={() => onLanguageChange("ko")}
+                >
+                  한
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${language === "en" ? styles.langButtonActive : ""}`}
+                  onClick={() => onLanguageChange("en")}
+                >
+                  En
+                </button>
+              </div>
+            </div>
+          )}
+
+          {onDisplayNamePreferenceChange && (
+            <div className={styles.row}>
+              <span className={styles.label}>{t(language, "profile.displayNamePreference")}</span>
+              <div className={styles.langToggle} aria-label="Display name preference">
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${displayNamePreference === "nickname" ? styles.langButtonActive : ""}`}
+                  onClick={() => onDisplayNamePreferenceChange("nickname")}
+                >
+                  {t(language, "profile.displayNickname")}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.langButton} ${displayNamePreference === "fullName" ? styles.langButtonActive : ""}`}
+                  onClick={() => onDisplayNamePreferenceChange("fullName")}
+                >
+                  {t(language, "profile.displayFullName")}
+                </button>
+              </div>
+            </div>
+          )}
 
           {saveError && <div className={styles.error} style={{ marginTop: 12 }}>{saveError}</div>}
 

@@ -11,10 +11,14 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.mobileHeader {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .headerCell {
   padding: 12px 8px;
   text-align: center;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -32,6 +36,10 @@
   min-height: 0;
 }
 
+.mobileGrid {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .dayCell {
   min-height: 100px;
   padding: 6px;
@@ -46,6 +54,14 @@
 
 .dayCell:nth-child(7n) {
   border-right: none;
+}
+
+.mobileGrid .dayCell:nth-child(5n) {
+  border-right: none;
+}
+
+.mobileGrid .dayCell:nth-child(7n) {
+  border-right: 1px solid var(--border-subtle);
 }
 
 .dayCell:hover {
@@ -238,7 +254,7 @@
 @media (max-width: 768px) {
   .headerCell {
     padding: 8px 4px;
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .dayCell {
@@ -254,6 +270,15 @@
 
   .shiftsContainer {
     gap: 1px;
+  }
+
+  /* Ensure mobile grid uses 5 columns */
+  .mobileHeader {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+
+  .mobileGrid {
+    grid-template-columns: repeat(5, 1fr) !important;
   }
 }
 

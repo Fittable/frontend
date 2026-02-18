@@ -11,6 +11,7 @@ export type TranslationKey =
   | "calendar.today"
   | "calendar.month"
   | "calendar.week"
+  | "calendar.day"
   | "calendar.all"
   | "calendar.mySchedule"
   // Shifts / detail panel
@@ -66,6 +67,10 @@ export type TranslationKey =
   | "profile.nickname"
   | "profile.deptName"
   | "profile.workCategory"
+  | "profile.language"
+  | "profile.displayNamePreference"
+  | "profile.displayNickname"
+  | "profile.displayFullName"
   | "profile.save"
   | "profile.saving"
   | "profile.loading"
@@ -85,6 +90,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "calendar.today": "오늘",
     "calendar.month": "월",
     "calendar.week": "주",
+    "calendar.day": "일",
     "calendar.all": "전체",
     "calendar.mySchedule": "내 일정",
 
@@ -143,6 +149,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.nickname": "닉네임",
     "profile.deptName": "대학",
     "profile.workCategory": "구분",
+    "profile.language": "언어",
+    "profile.displayNamePreference": "캘린더에 표시할 이름",
+    "profile.displayNickname": "닉네임",
+    "profile.displayFullName": "이름",
     "profile.save": "저장",
     "profile.saving": "저장 중...",
     "profile.loading": "불러오는 중...",
@@ -161,6 +171,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "calendar.today": "Today",
     "calendar.month": "Month",
     "calendar.week": "Week",
+    "calendar.day": "Day",
     "calendar.all": "All",
     "calendar.mySchedule": "My schedule",
 
@@ -219,6 +230,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.nickname": "Nickname",
     "profile.deptName": "Department",
     "profile.workCategory": "Category",
+    "profile.language": "Language",
+    "profile.displayNamePreference": "Name to display in calendar",
+    "profile.displayNickname": "Nickname",
+    "profile.displayFullName": "Full name",
     "profile.save": "Save",
     "profile.saving": "Saving...",
     "profile.loading": "Loading...",
