@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Shift, User, Holiday, CourseEvent, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import {
   WorkMonth,
@@ -23,6 +24,7 @@ interface WeeklyCalendarGridProps {
   onDayClick: (dateStr: string) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
+  days?: Date[]; // Optional: if provided, use these days instead of calculating week
 }
 
 // Time range for the vertical time axis (matches reference style roughly)
@@ -82,6 +84,7 @@ export default function WeeklyCalendarGrid({
   onDayClick,
   onShiftClick,
   onDayDoubleClick,
+  days: providedDays,
 }: WeeklyCalendarGridProps) {
   const userIndexMap = new Map<string, number>();
   const displayNameMap = new Map<string, string>();
@@ -108,25 +111,29 @@ export default function WeeklyCalendarGrid({
   const workStart = getWorkMonthStartDate(workMonth);
   const workEnd = getWorkMonthEndDate(workMonth);
 
-  // Show the week containing selected date, or the current week (today) when none selected
-  const anchorDate =
-    selectedDate != null
-      ? new Date(selectedDate + "T00:00:00")
-      : new Date();
+  // Use provided days if available (for day view), otherwise calculate week days
+  const days: Date[] = providedDays || (() => {
+    // Show the week containing selected date, or the current week (today) when none selected
+    const anchorDate =
+      selectedDate != null
+        ? new Date(selectedDate + "T00:00:00")
+        : new Date();
 
-  // Find Monday of the week that contains anchorDate (Mon = 0 ... Sun = 6)
-  const anchorDay = anchorDate.getDay(); // 0=Sun
-  const offsetToMonday = anchorDay === 0 ? -6 : 1 - anchorDay;
-  const weekStart = new Date(anchorDate);
-  weekStart.setDate(weekStart.getDate() + offsetToMonday);
+    // Find Monday of the week that contains anchorDate (Mon = 0 ... Sun = 6)
+    const anchorDay = anchorDate.getDay(); // 0=Sun
+    const offsetToMonday = anchorDay === 0 ? -6 : 1 - anchorDay;
+    const weekStart = new Date(anchorDate);
+    weekStart.setDate(weekStart.getDate() + offsetToMonday);
 
-  // Week view: Mon–Fri only (no Saturday/Sunday)
-  const days: Date[] = [];
-  for (let i = 0; i < 5; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    days.push(d);
-  }
+    // Week view: Mon–Fri only (no Saturday/Sunday)
+    const weekDays: Date[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      weekDays.push(d);
+    }
+    return weekDays;
+  })();
 
   // Group shifts by date for quick lookup
   const shiftsByDate = new Map<string, Shift[]>();
@@ -175,10 +182,32 @@ export default function WeeklyCalendarGrid({
     return `${displayHour} ${suffix}`;
   };
 
+  // Get responsive time column width
+  const [timeColumnWidth, setTimeColumnWidth] = useState(72);
+  useEffect(() => {
+    const updateWidth = () => {
+      if (window.innerWidth <= 768) {
+        setTimeColumnWidth(52);
+      } else if (window.innerWidth <= 1024) {
+        setTimeColumnWidth(60);
+      } else {
+        setTimeColumnWidth(72);
+      }
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
+  const dayCount = days.length;
+  
   return (
     <div className={styles.container}>
       {/* Header row with days */}
-      <div className={styles.headerRow}>
+      <div 
+        className={styles.headerRow}
+        style={{ gridTemplateColumns: `${timeColumnWidth}px repeat(${dayCount}, 1fr)` }}
+      >
         <div className={styles.timeColumnHeader} />
         {days.map((date, idx) => {
           const dateStr = formatDateStr(date);
@@ -187,6 +216,19 @@ export default function WeeklyCalendarGrid({
           const inWorkMonth = date >= workStart && date <= workEnd;
           const holiday = holidayMap.get(dateStr);
           const isPublicHoliday = holiday?.type === "Public holiday";
+          
+          // Get day name: for single day view, use full day name; for week view, use abbreviated
+          const dayOfWeek = date.getDay();
+          const dayNamesKo = ["일", "월", "화", "수", "목", "금", "토"];
+          const dayNamesEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const dayName = language === "ko" ? dayNamesKo[dayOfWeek] : dayNamesEn[dayOfWeek];
+          
+          // For week view (5 days), use the original logic; for day view (1 day), use full day name
+          const displayDayName = days.length === 1 
+            ? dayName
+            : (language === "ko"
+                ? ["월", "화", "수", "목", "금"][idx]
+                : ["Mon", "Tue", "Wed", "Thu", "Fri"][idx]);
 
           return (
             <button
@@ -195,15 +237,13 @@ export default function WeeklyCalendarGrid({
                 isSelected ? styles.dayHeaderSelected : ""
               } ${!inWorkMonth ? styles.dayHeaderOutside : ""} ${
                 isPublicHoliday ? styles.dayHeaderHoliday : ""
-              }`}
+              } ${dayCount === 1 ? styles.dayHeaderCentered : ""}`}
               onClick={() => onDayClick(dateStr)}
               onDoubleClick={() => onDayDoubleClick(dateStr)}
             >
               <div className={styles.dayHeaderLabel}>
                 <span className={styles.dayName}>
-                  {language === "ko"
-                    ? ["월", "화", "수", "목", "금"][idx]
-                    : ["Mon", "Tue", "Wed", "Thu", "Fri"][idx]}
+                  {displayDayName}
                 </span>
                 <span
                   className={`${styles.dayNumber} ${
@@ -231,7 +271,10 @@ export default function WeeklyCalendarGrid({
         })}
       </div>
 
-      <div className={styles.body}>
+      <div 
+        className={styles.body}
+        style={{ gridTemplateColumns: `${timeColumnWidth}px 1fr` }}
+      >
         {/* Time labels */}
         <div className={styles.timeColumn}>
           {hours.map((h) => (
@@ -242,7 +285,10 @@ export default function WeeklyCalendarGrid({
         </div>
 
         {/* Day columns: each day split into worker lanes (side-by-side) */}
-        <div className={styles.weekColumns}>
+        <div 
+          className={styles.weekColumns}
+          style={{ gridTemplateColumns: `repeat(${dayCount}, 1fr)` }}
+        >
           {days.map((date) => {
             const dateStr = formatDateStr(date);
             const dayShifts = shiftsByDate.get(dateStr) || [];

@@ -48,6 +48,15 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
+.dayHeaderCentered {
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.dayHeaderCentered .dayHeaderLabel {
+  justify-content: center;
+}
+
 .dayHeaderLabel {
   display: flex;
   align-items: center;

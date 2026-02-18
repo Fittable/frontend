@@ -11,6 +11,7 @@ export type TranslationKey =
   | "calendar.today"
   | "calendar.month"
   | "calendar.week"
+  | "calendar.day"
   | "calendar.all"
   | "calendar.mySchedule"
   // Shifts / detail panel
@@ -89,6 +90,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "calendar.today": "오늘",
     "calendar.month": "월",
     "calendar.week": "주",
+    "calendar.day": "일",
     "calendar.all": "전체",
     "calendar.mySchedule": "내 일정",
 
@@ -169,6 +171,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "calendar.today": "Today",
     "calendar.month": "Month",
     "calendar.week": "Week",
+    "calendar.day": "Day",
     "calendar.all": "All",
     "calendar.mySchedule": "My schedule",
 

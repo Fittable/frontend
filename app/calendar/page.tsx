@@ -74,7 +74,7 @@ export default function CalendarPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"month" | "week">("week");
+  const [viewMode, setViewMode] = useState<"month" | "week" | "day">("week");
   const [viewScope, setViewScope] = useState<"all" | "me">("me");
   const [language, setLanguage] = useState<"ko" | "en">("ko");
   const [visibleWorkerIds, setVisibleWorkerIds] = useState<string[]>([]);
@@ -304,10 +304,40 @@ export default function CalendarPage() {
     setWorkMonth(getWorkMonth(next));
   };
 
+  const handlePrevDay = () => {
+    const anchor = selectedDate
+      ? new Date(selectedDate + "T12:00:00")
+      : new Date();
+    const prev = new Date(anchor);
+    prev.setDate(prev.getDate() - 1);
+    setSelectedDate(formatDateStr(prev));
+    setWorkMonth(getWorkMonth(prev));
+  };
+
+  const handleNextDay = () => {
+    const anchor = selectedDate
+      ? new Date(selectedDate + "T12:00:00")
+      : new Date();
+    const next = new Date(anchor);
+    next.setDate(next.getDate() + 1);
+    setSelectedDate(formatDateStr(next));
+    setWorkMonth(getWorkMonth(next));
+  };
+
   const handleToday = () => {
     const today = new Date();
     setWorkMonth(getWorkMonth(today));
     setSelectedDate(formatDateStr(today));
+  };
+
+  const handleViewModeChange = (mode: "month" | "week" | "day") => {
+    setViewMode(mode);
+    // When switching to day view, ensure selectedDate is set to today if not already set
+    if (mode === "day" && !selectedDate) {
+      const today = new Date();
+      setSelectedDate(formatDateStr(today));
+      setWorkMonth(getWorkMonth(today));
+    }
   };
 
   const handleDownloadWorklog = async () => {
@@ -352,10 +382,16 @@ export default function CalendarPage() {
     }
   };
 
-  // Keyboard navigation (arrows respect month vs week view)
+  // Keyboard navigation (arrows respect month vs week vs day view)
   useEffect(() => {
-    const handlePrev = viewMode === "week" ? handlePrevWeek : handlePrevMonth;
-    const handleNext = viewMode === "week" ? handleNextWeek : handleNextMonth;
+    const handlePrev = 
+      viewMode === "day" ? handlePrevDay :
+      viewMode === "week" ? handlePrevWeek : 
+      handlePrevMonth;
+    const handleNext = 
+      viewMode === "day" ? handleNextDay :
+      viewMode === "week" ? handleNextWeek : 
+      handleNextMonth;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
@@ -526,10 +562,18 @@ export default function CalendarPage() {
           viewScope={viewScope}
           selectedDate={selectedDate}
           downloadDisabled={downloadingPdf}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           onViewScopeChange={setViewScope}
-          onPrevMonth={viewMode === "week" ? handlePrevWeek : handlePrevMonth}
-          onNextMonth={viewMode === "week" ? handleNextWeek : handleNextMonth}
+          onPrevMonth={
+            viewMode === "day" ? handlePrevDay :
+            viewMode === "week" ? handlePrevWeek : 
+            handlePrevMonth
+          }
+          onNextMonth={
+            viewMode === "day" ? handleNextDay :
+            viewMode === "week" ? handleNextWeek : 
+            handleNextMonth
+          }
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           onDownloadWorklog={handleDownloadWorklog}
@@ -585,6 +629,25 @@ export default function CalendarPage() {
                 onDayClick={handleDayClick}
                 onShiftClick={handleShiftClick}
                 onDayDoubleClick={handleDayDoubleClick}
+              />
+            ) : viewMode === "day" ? (
+              <WeeklyCalendarGrid
+                workMonth={workMonth}
+                shifts={filteredShifts}
+                courseEvents={courseEvents}
+                users={users}
+                holidays={holidays}
+                selectedDate={selectedDate}
+                language={language}
+                displayNamePreference={displayNamePreference}
+                onDayClick={handleDayClick}
+                onShiftClick={handleShiftClick}
+                onDayDoubleClick={handleDayDoubleClick}
+                days={
+                  selectedDate
+                    ? [new Date(selectedDate + "T12:00:00")]
+                    : [new Date()]
+                }
               />
             ) : (
               <WeeklyCalendarGrid

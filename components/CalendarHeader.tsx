@@ -9,11 +9,11 @@ export type ViewScope = "all" | "me";
 interface CalendarHeaderProps {
   workMonth: WorkMonth;
   language: Language;
-  viewMode: "month" | "week";
+  viewMode: "month" | "week" | "day";
   viewScope: ViewScope;
   selectedDate?: string | null;
   downloadDisabled?: boolean;
-  onViewModeChange: (mode: "month" | "week") => void;
+  onViewModeChange: (mode: "month" | "week" | "day") => void;
   onViewScopeChange: (scope: ViewScope) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
@@ -51,6 +51,21 @@ export default function CalendarHeader({
     ? `${currentDate.getMonth() + 1}월`
     : currentDate.toLocaleDateString("en-US", { month: "short" });
 
+  // Format header label based on view mode
+  const getHeaderLabel = () => {
+    if (viewMode === "day") {
+      const date = selectedDate 
+        ? new Date(selectedDate + "T12:00:00")
+        : new Date();
+      if (language === "ko") {
+        return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+      } else {
+        return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+      }
+    }
+    return monthLabel;
+  };
+
   return (
     <header className={styles.header}>
       {/* Desktop layout */}
@@ -62,7 +77,7 @@ export default function CalendarHeader({
           </button>
 
           {/* Month/Year title */}
-          <h1 className={styles.title}>{monthLabel}</h1>
+          <h1 className={styles.title}>{getHeaderLabel()}</h1>
 
           {/* Scope toggle: All / My schedule */}
           <div className={styles.scopeToggle} aria-label="Calendar scope">
@@ -118,6 +133,15 @@ export default function CalendarHeader({
               onClick={() => onViewModeChange("week")}
             >
               {t(language, "calendar.week")}
+            </button>
+            <button
+              type="button"
+              className={`${styles.viewToggleButton} ${
+                viewMode === "day" ? styles.viewToggleButtonActive : ""
+              }`}
+              onClick={() => onViewModeChange("day")}
+            >
+              {t(language, "calendar.day")}
             </button>
           </div>
 
@@ -191,6 +215,15 @@ export default function CalendarHeader({
                 onClick={() => onViewModeChange("week")}
               >
                 주
+              </button>
+              <button
+                type="button"
+                className={`${styles.mobileViewButton} ${
+                  viewMode === "day" ? styles.mobileViewButtonActive : ""
+                }`}
+                onClick={() => onViewModeChange("day")}
+              >
+                일
               </button>
             </div>
           </div>
