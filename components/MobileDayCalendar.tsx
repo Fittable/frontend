@@ -98,6 +98,22 @@ export default function MobileDayCalendar({
     shiftsByDate.set(shift.date, existing);
   });
 
+  // For each date, ordered list of user_ids with shifts (for lane layout)
+  const workersByDate = new Map<string, string[]>();
+  days.forEach((date) => {
+    const dateStr = formatDateStr(date);
+    const dayShifts = shiftsByDate.get(dateStr) || [];
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    users.forEach((u) => {
+      if (dayShifts.some((s) => s.user_id === u.id) && !seen.has(u.id)) {
+        seen.add(u.id);
+        ordered.push(u.id);
+      }
+    });
+    workersByDate.set(dateStr, ordered);
+  });
+
   const todayStr = formatDateStr(new Date());
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
 
@@ -204,39 +220,101 @@ export default function MobileDayCalendar({
             const dateStr = formatDateStr(date);
             const dayShifts = shiftsByDate.get(dateStr) || [];
             const dayCourses = courseEventsByDate.get(dateStr) || [];
+            const workersOnDay = workersByDate.get(dateStr) || [];
             const inWorkMonth = date >= workStart && date <= workEnd;
 
-            // Combine shifts and courses, sort by start time
-            const allEvents: Array<{
-              type: "shift" | "course";
-              data: Shift | CourseEvent;
-              startMinutes: number;
-              endMinutes: number;
-            }> = [];
+            // Use lanes (side-by-side) when 2+ shifts; otherwise single column
+            const useLanes = dayShifts.length > 1 && workersOnDay.length > 0;
+            const hasCourses = dayCourses.length > 0;
+            const laneCount = useLanes
+              ? workersOnDay.length + (hasCourses ? 1 : 0)
+              : 1;
 
-            dayShifts.forEach((shift) => {
-              const startMinutes = parseTimeToMinutes(shift.start_time);
-              const endMinutes = parseTimeToMinutes(shift.end_time);
-              allEvents.push({
-                type: "shift",
-                data: shift,
-                startMinutes,
-                endMinutes,
+            const renderEventsInGrid = (laneShifts: Shift[]) => {
+              const allEvents: Array<{
+                type: "shift" | "course";
+                data: Shift | CourseEvent;
+                startMinutes: number;
+                endMinutes: number;
+              }> = [];
+              laneShifts.forEach((shift) => {
+                const startMinutes = parseTimeToMinutes(shift.start_time);
+                const endMinutes = parseTimeToMinutes(shift.end_time);
+                allEvents.push({
+                  type: "shift",
+                  data: shift,
+                  startMinutes,
+                  endMinutes,
+                });
               });
-            });
+              if (!useLanes) {
+                dayCourses.forEach((course) => {
+                  const startMinutes = parseTimeToMinutes(course.start_time);
+                  const endMinutes = parseTimeToMinutes(course.end_time);
+                  allEvents.push({
+                    type: "course",
+                    data: course,
+                    startMinutes,
+                    endMinutes,
+                  });
+                });
+              }
+              allEvents.sort((a, b) => a.startMinutes - b.startMinutes);
 
-            dayCourses.forEach((course) => {
-              const startMinutes = parseTimeToMinutes(course.start_time);
-              const endMinutes = parseTimeToMinutes(course.end_time);
-              allEvents.push({
-                type: "course",
-                data: course,
-                startMinutes,
-                endMinutes,
+              return allEvents.map((event) => {
+                const startMinutes = event.startMinutes;
+                const endMinutes = event.endMinutes;
+                const top = Math.max(0, ((startMinutes - START_HOUR * 60) / totalMinutes) * 100);
+                const bottom =
+                  100 - Math.max(0, Math.min(100, ((endMinutes - START_HOUR * 60) / totalMinutes) * 100));
+                const height = Math.max(6, 100 - top - bottom);
+
+                if (event.type === "shift") {
+                  const shift = event.data as Shift;
+                  const color = getWorkerColor(userIndexMap.get(shift.user_id) ?? 0);
+                  return (
+                    <button
+                      key={`shift-${shift.id}`}
+                      className={styles.eventBlock}
+                      style={{
+                        top: `${top}%`,
+                        height: `${height}%`,
+                        borderLeftColor: color,
+                        backgroundColor: `${color}1A`,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShiftClick(shift);
+                      }}
+                    >
+                      <span className={styles.eventTime}>
+                        {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
+                      </span>
+                      <span className={styles.eventTitle}>{displayNameMap.get(shift.user_id) ?? shift.name ?? "Unknown"}</span>
+                    </button>
+                  );
+                } else {
+                  const course = event.data as CourseEvent;
+                  return (
+                    <div
+                      key={`course-${course.course_code}-${course.start_time}`}
+                      className={styles.eventBlock}
+                      style={{
+                        top: `${top}%`,
+                        height: `${height}%`,
+                        borderLeftColor: "#2563eb",
+                        backgroundColor: "rgba(37, 99, 235, 0.14)",
+                      }}
+                    >
+                      <span className={styles.eventTime}>
+                        {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                      </span>
+                      <span className={styles.eventTitle}>{course.course_title}</span>
+                    </div>
+                  );
+                }
               });
-            });
-
-            allEvents.sort((a, b) => a.startMinutes - b.startMinutes);
+            };
 
             return (
               <div
@@ -247,65 +325,92 @@ export default function MobileDayCalendar({
                 onClick={() => onDayClick(dateStr)}
                 onDoubleClick={() => onDayDoubleClick(dateStr)}
               >
-                <div className={styles.dayColumnGrid}>
-                  {hours.map((h) => (
-                    <div key={h} className={styles.timeSlotCell} />
-                  ))}
-
-                  {/* Render events */}
-                  {allEvents.map((event) => {
-                    const startMinutes = event.startMinutes;
-                    const endMinutes = event.endMinutes;
-                    const top = Math.max(0, ((startMinutes - START_HOUR * 60) / totalMinutes) * 100);
-                    const bottom =
-                      100 - Math.max(0, Math.min(100, ((endMinutes - START_HOUR * 60) / totalMinutes) * 100));
-                    const height = Math.max(6, 100 - top - bottom);
-
-                    if (event.type === "shift") {
-                      const shift = event.data as Shift;
-                      const color = getWorkerColor(userIndexMap.get(shift.user_id) ?? 0);
-                      return (
-                        <button
-                          key={`shift-${shift.id}`}
-                          className={styles.eventBlock}
-                          style={{
-                            top: `${top}%`,
-                            height: `${height}%`,
-                            borderLeftColor: color,
-                            backgroundColor: `${color}1A`,
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onShiftClick(shift);
-                          }}
-                        >
-                          <span className={styles.eventTime}>
-                            {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
-                          </span>
-                          <span className={styles.eventTitle}>{displayNameMap.get(shift.user_id) ?? shift.name ?? "Unknown"}</span>
-                        </button>
-                      );
-                    } else {
-                      const course = event.data as CourseEvent;
-                      return (
-                        <div
-                          key={`course-${course.course_code}-${course.start_time}`}
-                          className={styles.eventBlock}
-                          style={{
-                            top: `${top}%`,
-                            height: `${height}%`,
-                            borderLeftColor: "#2563eb",
-                            backgroundColor: "rgba(37, 99, 235, 0.14)",
-                          }}
-                        >
-                          <span className={styles.eventTime}>
-                            {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
-                          </span>
-                          <span className={styles.eventTitle}>{course.course_title}</span>
+                <div
+                  className={styles.dayColumnLanes}
+                  style={{ gridTemplateColumns: `repeat(${laneCount}, 1fr)` }}
+                >
+                  {useLanes ? (
+                    <>
+                      {workersOnDay.map((userId) => (
+                        <div key={userId} className={styles.dayLane}>
+                          <div className={styles.dayColumnGrid}>
+                            {hours.map((h) => (
+                              <div key={h} className={styles.timeSlotCell} />
+                            ))}
+                            {renderEventsInGrid(dayShifts.filter((s) => s.user_id === userId))}
+                          </div>
                         </div>
-                      );
-                    }
-                  })}
+                      ))}
+                      {hasCourses && (
+                        <div key="__courses__" className={styles.dayLane}>
+                          <div className={styles.dayColumnGrid}>
+                            {hours.map((h) => (
+                              <div key={h} className={styles.timeSlotCell} />
+                            ))}
+                            {dayCourses.map((course) => {
+                              const startMinutes = parseTimeToMinutes(course.start_time);
+                              const endMinutes = parseTimeToMinutes(course.end_time);
+                              const top = Math.max(0, ((startMinutes - START_HOUR * 60) / totalMinutes) * 100);
+                              const bottom =
+                                100 - Math.max(0, Math.min(100, ((endMinutes - START_HOUR * 60) / totalMinutes) * 100));
+                              const height = Math.max(6, 100 - top - bottom);
+                              return (
+                                <div
+                                  key={`course-${course.course_code}-${course.start_time}`}
+                                  className={styles.eventBlock}
+                                  style={{
+                                    top: `${top}%`,
+                                    height: `${height}%`,
+                                    borderLeftColor: "#2563eb",
+                                    backgroundColor: "rgba(37, 99, 235, 0.14)",
+                                  }}
+                                >
+                                  <span className={styles.eventTime}>
+                                    {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                                  </span>
+                                  <span className={styles.eventTitle}>{course.course_title}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className={styles.dayLane}>
+                      <div className={styles.dayColumnGrid}>
+                        {hours.map((h) => (
+                          <div key={h} className={styles.timeSlotCell} />
+                        ))}
+                        {renderEventsInGrid(dayShifts)}
+                        {dayCourses.map((course) => {
+                          const startMinutes = parseTimeToMinutes(course.start_time);
+                          const endMinutes = parseTimeToMinutes(course.end_time);
+                          const top = Math.max(0, ((startMinutes - START_HOUR * 60) / totalMinutes) * 100);
+                          const bottom =
+                            100 - Math.max(0, Math.min(100, ((endMinutes - START_HOUR * 60) / totalMinutes) * 100));
+                          const height = Math.max(6, 100 - top - bottom);
+                          return (
+                            <div
+                              key={`course-${course.course_code}-${course.start_time}`}
+                              className={styles.eventBlock}
+                              style={{
+                                top: `${top}%`,
+                                height: `${height}%`,
+                                borderLeftColor: "#2563eb",
+                                backgroundColor: "rgba(37, 99, 235, 0.14)",
+                              }}
+                            >
+                              <span className={styles.eventTime}>
+                                {course.start_time.slice(0, 5)} - {course.end_time.slice(0, 5)}
+                              </span>
+                              <span className={styles.eventTitle}>{course.course_title}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

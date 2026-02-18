@@ -185,6 +185,18 @@
   background: var(--bg-secondary);
 }
 
+.dayColumnLanes {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.dayLane {
+  min-width: 0;
+  position: relative;
+}
+
 .dayColumnGrid {
   position: relative;
   width: 100%;

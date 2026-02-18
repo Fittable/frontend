@@ -252,9 +252,11 @@ export default function WeeklyCalendarGrid({
             const inWorkMonth = date >= workStart && date <= workEnd;
             const hasOverlap = dayHasOverlappingShiftAndCourse(dayShifts, dayCourses);
 
-            // When work and timetable don't overlap: single full-width lane for both; otherwise split lanes
+            // Use merged lane only when single shift and no overlap; otherwise lanes (side-by-side) to avoid overlap
             const useMergedLane =
-              !hasOverlap && (workersOnDay.length > 0 || hasCourses);
+              !hasOverlap &&
+              dayShifts.length <= 1 &&
+              (workersOnDay.length > 0 || hasCourses);
 
             const laneItems: (string | null)[] = useMergedLane
               ? ["__merged__"]
