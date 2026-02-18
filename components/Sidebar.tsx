@@ -183,7 +183,7 @@ export default function Sidebar({
             <div className={styles.userMeta}>
               <div className={styles.userAvatar}>
                 <span className={styles.userAvatarLetter}>
-                  {getDisplayName(user, displayNamePreference).charAt(0).toUpperCase()}
+                  {getDisplayName(user, "fullName").charAt(0).toUpperCase()}
                 </span>
                 {!profileImageError && (
                   <img
@@ -196,7 +196,7 @@ export default function Sidebar({
               </div>
               <div className={styles.userDetails}>
                 <div className={styles.userNameRow}>
-                  <span className={styles.userName}>{getDisplayName(user, displayNamePreference)}</span>
+                  <span className={styles.userName}>{getDisplayName(user, "fullName")}</span>
                   <button
                     type="button"
                     className={styles.settingsButton}
