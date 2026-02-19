@@ -20,6 +20,7 @@ interface CalendarHeaderProps {
   onToday: () => void;
   onMenuToggle: () => void;
   onDownloadWorklog?: () => void;
+  onDownloadSchedulePDF?: () => void;
   onLanguageChange?: (lang: Language) => void;
 }
 
@@ -37,6 +38,7 @@ export default function CalendarHeader({
   onViewScopeChange,
   onMenuToggle,
   onDownloadWorklog,
+  onDownloadSchedulePDF,
   onLanguageChange,
 }: CalendarHeaderProps) {
   const monthLabel =
@@ -103,6 +105,16 @@ export default function CalendarHeader({
         </div>
 
         <div className={styles.right}>
+          {onDownloadSchedulePDF && (
+            <button
+              type="button"
+              className={styles.downloadButton}
+              onClick={onDownloadSchedulePDF}
+              disabled={downloadDisabled}
+            >
+              {language === "ko" ? "시간표 다운로드" : "Download Schedule"}
+            </button>
+          )}
           {onDownloadWorklog && (
             <button
               type="button"
@@ -228,6 +240,17 @@ export default function CalendarHeader({
             </div>
           </div>
           <div className={styles.mobileBottomRight}>
+            {onDownloadSchedulePDF && (
+              <button
+                type="button"
+                className={styles.mobileDownloadButton}
+                onClick={onDownloadSchedulePDF}
+                disabled={downloadDisabled}
+                title={language === "ko" ? "시간표 다운로드" : "Download Schedule"}
+              >
+                <DownloadIcon />
+              </button>
+            )}
             {onDownloadWorklog && (
               <button
                 type="button"

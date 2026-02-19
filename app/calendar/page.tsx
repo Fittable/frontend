@@ -382,6 +382,25 @@ export default function CalendarPage() {
     }
   };
 
+  const handleDownloadSchedulePDF = async () => {
+    if (!user) return;
+
+    const month = `${workMonth.startYear}-${String(workMonth.startMonth + 1).padStart(2, "0")}`;
+
+    setDownloadingPdf(true);
+    try {
+      await api.downloadSchedulePDF(month);
+    } catch (err) {
+      console.error("Failed to download schedule PDF:", err);
+      const errorMessage = language === "ko" 
+        ? "시간표 다운로드에 실패했습니다."
+        : "Failed to download schedule.";
+      alert(err instanceof Error ? err.message : errorMessage);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   // Keyboard navigation (arrows respect month vs week vs day view)
   useEffect(() => {
     const handlePrev = 
@@ -577,6 +596,7 @@ export default function CalendarPage() {
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           onDownloadWorklog={handleDownloadWorklog}
+          onDownloadSchedulePDF={handleDownloadSchedulePDF}
           onLanguageChange={setLanguage}
         />
 

@@ -149,5 +149,49 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
+
+  // Schedule PDF download
+  downloadSchedulePDF: async (month?: string, startDate?: string, endDate?: string): Promise<void> => {
+    const params = new URLSearchParams();
+    if (startDate && endDate) {
+      params.append("start_date", startDate);
+      params.append("end_date", endDate);
+    } else if (month) {
+      params.append("month", month);
+    } else {
+      throw new Error("Either month or start_date+end_date required");
+    }
+
+    const res = await fetch(`${API_BASE}/shifts/schedule/pdf?${params}`, {
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: `Request failed with status ${res.status}` }));
+      const message = error.detail ?? error.message ?? `Request failed with status ${res.status}`;
+      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    
+    // Get filename from Content-Disposition header or use default
+    const contentDisposition = res.headers.get("Content-Disposition");
+    let filename = month ? `schedule-${month}.pdf` : "schedule.pdf";
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, "");
+      }
+    }
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
 };
 
