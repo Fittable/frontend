@@ -89,6 +89,46 @@
   margin-left: auto;
 }
 
+.downloadSection {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.downloadButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--bg-active);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.downloadButton svg {
+  flex-shrink: 0;
+}
+
+.downloadButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.downloadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .spacer {
   flex: 1;
 }

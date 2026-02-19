@@ -569,6 +569,9 @@ export default function CalendarPage() {
         displayNamePreference={displayNamePreference}
         onDisplayNamePreferenceChange={handleDisplayNamePreferenceChange}
         onProfileUpdated={handleProfileUpdated}
+        onDownloadSchedulePDF={handleDownloadSchedulePDF}
+        onDownloadWorklog={handleDownloadWorklog}
+        downloadDisabled={downloadingPdf}
       />
 
       {/* Main Content */}
@@ -580,7 +583,6 @@ export default function CalendarPage() {
           viewMode={viewMode}
           viewScope={viewScope}
           selectedDate={selectedDate}
-          downloadDisabled={downloadingPdf}
           onViewModeChange={handleViewModeChange}
           onViewScopeChange={setViewScope}
           onPrevMonth={
@@ -595,8 +597,6 @@ export default function CalendarPage() {
           }
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          onDownloadWorklog={handleDownloadWorklog}
-          onDownloadSchedulePDF={handleDownloadSchedulePDF}
           onLanguageChange={setLanguage}
         />
 

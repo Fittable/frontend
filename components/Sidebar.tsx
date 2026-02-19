@@ -43,6 +43,9 @@ interface SidebarProps {
   displayNamePreference?: DisplayNamePreference;
   onDisplayNamePreferenceChange?: (pref: DisplayNamePreference) => void;
   onProfileUpdated?: (profile: ProfileSettings) => void;
+  onDownloadSchedulePDF?: () => void;
+  onDownloadWorklog?: () => void;
+  downloadDisabled?: boolean;
 }
 
 export default function Sidebar({
@@ -62,6 +65,9 @@ export default function Sidebar({
   displayNamePreference = "nickname",
   onDisplayNamePreferenceChange,
   onProfileUpdated,
+  onDownloadSchedulePDF,
+  onDownloadWorklog,
+  downloadDisabled,
 }: SidebarProps) {
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
@@ -179,6 +185,33 @@ export default function Sidebar({
 
         {/* User Info */}
         <div className={styles.userSection}>
+          {/* Download Buttons */}
+          {(onDownloadSchedulePDF || onDownloadWorklog) && (
+            <div className={styles.downloadSection}>
+              {onDownloadSchedulePDF && (
+                <button
+                  type="button"
+                  className={styles.downloadButton}
+                  onClick={onDownloadSchedulePDF}
+                  disabled={downloadDisabled}
+                >
+                  <DownloadIcon />
+                  <span>{language === "ko" ? "시간표" : "Schedule"}</span>
+                </button>
+              )}
+              {onDownloadWorklog && (
+                <button
+                  type="button"
+                  className={styles.downloadButton}
+                  onClick={onDownloadWorklog}
+                  disabled={downloadDisabled}
+                >
+                  <DownloadIcon />
+                  <span>{language === "ko" ? "근무일지" : "Work Log"}</span>
+                </button>
+              )}
+            </div>
+          )}
           <div className={styles.userInfo}>
             <div className={styles.userMeta}>
               <div className={styles.userAvatar}>
@@ -247,6 +280,16 @@ function LogoutIcon() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <polyline points="16,17 21,12 16,7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7,10 12,15 17,10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   );
 }
