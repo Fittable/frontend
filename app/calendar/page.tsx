@@ -382,6 +382,43 @@ export default function CalendarPage() {
     }
   };
 
+  const handleDownloadSchedulePDF = async () => {
+    if (!user) return;
+
+    const month = `${workMonth.startYear}-${String(workMonth.startMonth + 1).padStart(2, "0")}`;
+    
+    // Calculate work month dates: 25th of start month to 24th of end month
+    const startDate = new Date(workMonth.startYear, workMonth.startMonth, 25);
+    const endDate = new Date(workMonth.endYear, workMonth.endMonth, 24);
+    
+    // Format dates as YYYY-MM-DD
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+    
+    const startDateStr = formatDate(startDate);
+    const endDateStr = formatDate(endDate);
+    
+    // Create filename: "알바 시간표 (2026-01-25 ~ 2026-02-24).pdf"
+    const filename = `알바 시간표 (${startDateStr} ~ ${endDateStr}).pdf`;
+
+    setDownloadingPdf(true);
+    try {
+      await api.downloadSchedulePDF(month, undefined, undefined, filename);
+    } catch (err) {
+      console.error("Failed to download schedule PDF:", err);
+      const errorMessage = language === "ko" 
+        ? "시간표 다운로드에 실패했습니다."
+        : "Failed to download schedule.";
+      alert(err instanceof Error ? err.message : errorMessage);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   // Keyboard navigation (arrows respect month vs week vs day view)
   useEffect(() => {
     const handlePrev = 
@@ -550,6 +587,9 @@ export default function CalendarPage() {
         displayNamePreference={displayNamePreference}
         onDisplayNamePreferenceChange={handleDisplayNamePreferenceChange}
         onProfileUpdated={handleProfileUpdated}
+        onDownloadSchedulePDF={handleDownloadSchedulePDF}
+        onDownloadWorklog={handleDownloadWorklog}
+        downloadDisabled={downloadingPdf}
       />
 
       {/* Main Content */}
@@ -561,7 +601,6 @@ export default function CalendarPage() {
           viewMode={viewMode}
           viewScope={viewScope}
           selectedDate={selectedDate}
-          downloadDisabled={downloadingPdf}
           onViewModeChange={handleViewModeChange}
           onViewScopeChange={setViewScope}
           onPrevMonth={
@@ -576,7 +615,6 @@ export default function CalendarPage() {
           }
           onToday={handleToday}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          onDownloadWorklog={handleDownloadWorklog}
           onLanguageChange={setLanguage}
         />
 
