@@ -4,13 +4,18 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { Shift, User, getDisplayName, DisplayNamePreference } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
+import { formatDateStr } from "@/lib/workMonth";
 import styles from "./ShiftEditorModal.module.css";
 
 interface ShiftEditorModalProps {
   shift: Shift | null;
   date: string;
+  /** Pre-selected dates from calendar (for multi-day selection) */
+  selectedDates?: string[];
   /** All shifts on the selected date (used to detect full-day and set Full Day checked) */
   shiftsOnDate?: Shift[];
+  /** All shifts (needed for multi-date deletion) */
+  allShifts?: Shift[];
   users: User[];
   isAdmin: boolean;
   currentUserId: string;
@@ -18,6 +23,7 @@ interface ShiftEditorModalProps {
   displayNamePreference?: DisplayNamePreference;
   onSave: () => void;
   onClose: () => void;
+  onDelete?: (shiftId: string, skipConfirmation?: boolean) => void;
 }
 
 // Time presets
@@ -35,7 +41,9 @@ const PRESETS = {
 export default function ShiftEditorModal({
   shift,
   date,
+  selectedDates: preSelectedDates,
   shiftsOnDate = [],
+  allShifts = [],
   users,
   isAdmin,
   currentUserId,
@@ -43,6 +51,7 @@ export default function ShiftEditorModal({
   displayNamePreference = "nickname",
   onSave,
   onClose,
+  onDelete,
 }: ShiftEditorModalProps) {
   // Independent toggles - can select any combination
   const [morningSelected, setMorningSelected] = useState(false);
@@ -54,10 +63,109 @@ export default function ShiftEditorModal({
   const [customEnd, setCustomEnd] = useState("14:45");
   const [userId, setUserId] = useState(currentUserId);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  // Multi-day selection: selected day indices within the week (0=Mon, 1=Tue, ..., 4=Fri)
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  // All selected dates (for multi-week selections from calendar)
+  const [allSelectedDates, setAllSelectedDates] = useState<string[]>([]);
 
   // Normalize time to HH:MM:00 for API
   const toTime = (hhm: string) => (hhm.length === 5 ? `${hhm}:00` : hhm);
+
+  // Get week dates (Mon-Fri) based on the selected date
+  const getWeekDates = (anchorDate: string): Date[] => {
+    const anchor = new Date(anchorDate + "T00:00:00");
+    const dayOfWeek = anchor.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    // Convert to Monday-start: Mon=0, Tue=1, ..., Sun=6
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(anchor);
+    monday.setDate(anchor.getDate() + mondayOffset);
+    
+    const weekDates: Date[] = [];
+    for (let i = 0; i < 5; i++) { // Mon-Fri only
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      weekDates.push(d);
+    }
+    return weekDates;
+  };
+
+  // Initialize selected days when creating new shift
+  useEffect(() => {
+    if (!shift && date) {
+      if (preSelectedDates && preSelectedDates.length > 0) {
+        // Use pre-selected dates from calendar (multi-day selection)
+        setAllSelectedDates(preSelectedDates);
+        
+        // Also set week-based selection for dates within the anchor week
+        const weekDates = getWeekDates(date);
+        const selectedIndices: number[] = [];
+        preSelectedDates.forEach((selectedDateStr) => {
+          const selectedDate = new Date(selectedDateStr + "T00:00:00");
+          const dayIndex = weekDates.findIndex(
+            (d) => d.toDateString() === selectedDate.toDateString()
+          );
+          if (dayIndex !== -1) {
+            selectedIndices.push(dayIndex);
+          }
+        });
+        setSelectedDays(selectedIndices.sort());
+      } else {
+        // Default: select the anchor date's day
+        setAllSelectedDates([date]);
+        const weekDates = getWeekDates(date);
+        const anchorDate = new Date(date + "T00:00:00");
+        const dayIndex = weekDates.findIndex(
+          (d) => d.toDateString() === anchorDate.toDateString()
+        );
+        if (dayIndex !== -1) {
+          setSelectedDays([dayIndex]);
+        } else {
+          setSelectedDays([]);
+        }
+      }
+    } else if (shift) {
+      // When editing, only select the current date
+      setSelectedDays([]);
+      setAllSelectedDates([]);
+    }
+  }, [shift, date, preSelectedDates]);
+
+  const handleDayToggle = (dayIndex: number) => {
+    setSelectedDays((prev) => {
+      const newSelection = prev.includes(dayIndex)
+        ? prev.filter((d) => d !== dayIndex)
+        : [...prev, dayIndex].sort();
+      
+      // Update allSelectedDates based on week selection
+      const weekDates = getWeekDates(date);
+      const newAllDates = newSelection.map((idx) => formatDateStr(weekDates[idx]));
+      setAllSelectedDates(newAllDates);
+      
+      return newSelection;
+    });
+  };
+
+  const handleRemoveDate = (dateToRemove: string) => {
+    setAllSelectedDates((prev) => {
+      const newDates = prev.filter((d) => d !== dateToRemove);
+      // Also update week-based selection
+      const weekDates = getWeekDates(date);
+      const selectedIndices: number[] = [];
+      newDates.forEach((selectedDateStr) => {
+        const selectedDate = new Date(selectedDateStr + "T00:00:00");
+        const dayIndex = weekDates.findIndex(
+          (d) => d.toDateString() === selectedDate.toDateString()
+        );
+        if (dayIndex !== -1) {
+          selectedIndices.push(dayIndex);
+        }
+      });
+      setSelectedDays(selectedIndices.sort());
+      return newDates;
+    });
+  };
 
   // Detect preset from existing shift times
   const detectFromShift = (start: string, end: string) => {
@@ -137,6 +245,50 @@ export default function ShiftEditorModal({
     }
   };
 
+  const handleDelete = async () => {
+    const datesToDelete = (allSelectedDates.length > 0 ? allSelectedDates : [date]);
+    const targetUserId = shift ? shift.user_id : userId;
+    
+    // Check if there are any shifts to delete
+    const shiftsToDelete = allShifts.filter((s) => 
+      datesToDelete.includes(s.date) && s.user_id === targetUserId
+    );
+    
+    if (shiftsToDelete.length === 0) {
+      const noShiftsMessage = language === "ko"
+        ? "삭제할 근무가 없습니다."
+        : "No shifts to delete.";
+      setError(noShiftsMessage);
+      return;
+    }
+    
+    const confirmMessage = language === "ko" 
+      ? shift
+        ? "이 근무를 삭제하시겠습니까?"
+        : `선택한 ${datesToDelete.length}일의 근무를 삭제하시겠습니까?`
+      : shift
+        ? "Are you sure you want to delete this shift?"
+        : `Are you sure you want to delete shifts for ${datesToDelete.length} selected day(s)?`;
+    
+    if (!confirm(confirmMessage)) return;
+
+    setDeleting(true);
+    setError("");
+
+    try {
+      // Delete all shifts for the target user on all selected dates
+      for (const s of shiftsToDelete) {
+        await api.deleteShift(s.id);
+      }
+      // Refresh the shifts list and close modal
+      onSave();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+      setDeleting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -144,6 +296,12 @@ export default function ShiftEditorModal({
     // Validate that at least one shift option is selected
     if (!shift && !morningSelected && !eveningSelected && !customSelected) {
       setError(t(language, "shifts.errorNoSelection"));
+      return;
+    }
+
+    // Validate that at least one day is selected when creating new shift
+    if (!shift && allSelectedDates.length === 0 && selectedDays.length === 0) {
+      setError(t(language, "shifts.errorNoDaySelected"));
       return;
     }
     
@@ -215,30 +373,37 @@ export default function ShiftEditorModal({
           });
         }
       } else {
-        // Creating new shift(s) - create one for each selected option
-        if (morningSelected) {
-          await api.createShift({
-            date,
-            start_time: toTime(times.morning.start),
-            end_time: toTime(times.morning.end),
-            user_id: isAdmin ? userId : undefined,
-          });
-        }
-        if (eveningSelected) {
-          await api.createShift({
-            date,
-            start_time: toTime(times.evening.start),
-            end_time: toTime(times.evening.end),
-            user_id: isAdmin ? userId : undefined,
-          });
-        }
-        if (customSelected) {
-          await api.createShift({
-            date,
-            start_time: toTime(customStart),
-            end_time: toTime(customEnd),
-            user_id: isAdmin ? userId : undefined,
-          });
+        // Creating new shift(s) - create for each selected day and each selected time option
+        // Use allSelectedDates if available (from calendar multi-selection), otherwise use week-based selection
+        const datesToCreate = allSelectedDates.length > 0 
+          ? allSelectedDates 
+          : selectedDays.map((dayIndex) => formatDateStr(getWeekDates(date)[dayIndex]));
+
+        for (const targetDate of datesToCreate) {
+          if (morningSelected) {
+            await api.createShift({
+              date: targetDate,
+              start_time: toTime(times.morning.start),
+              end_time: toTime(times.morning.end),
+              user_id: isAdmin ? userId : undefined,
+            });
+          }
+          if (eveningSelected) {
+            await api.createShift({
+              date: targetDate,
+              start_time: toTime(times.evening.start),
+              end_time: toTime(times.evening.end),
+              user_id: isAdmin ? userId : undefined,
+            });
+          }
+          if (customSelected) {
+            await api.createShift({
+              date: targetDate,
+              start_time: toTime(customStart),
+              end_time: toTime(customEnd),
+              user_id: isAdmin ? userId : undefined,
+            });
+          }
         }
       }
       onSave();
@@ -261,11 +426,44 @@ export default function ShiftEditorModal({
       )
     : "";
 
+  // Format all selected dates for display
+  const formatSelectedDates = (dates: string[]): string => {
+    if (dates.length === 0) return "";
+    if (dates.length === 1) {
+      const d = new Date(dates[0] + "T00:00:00");
+      return d.toLocaleDateString(
+        language === "ko" ? "ko-KR" : "en-US",
+        {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }
+      );
+    }
+    // Multiple dates: show count and first/last dates
+    const first = new Date(dates[0] + "T00:00:00");
+    const last = new Date(dates[dates.length - 1] + "T00:00:00");
+    if (language === "ko") {
+      return `${dates.length}일 선택됨 (${first.getMonth() + 1}/${first.getDate()} ~ ${last.getMonth() + 1}/${last.getDate()})`;
+    } else {
+      return `${dates.length} days selected (${first.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ~ ${last.toLocaleDateString("en-US", { month: "short", day: "numeric" })})`;
+    }
+  };
+
   const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
 
   // Count how many shifts will be created
-  const shiftCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + (customSelected ? 1 : 0);
+  const timeOptionCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + (customSelected ? 1 : 0);
+  const dayCount = shift ? 1 : (allSelectedDates.length > 0 ? allSelectedDates.length : selectedDays.length);
+  const shiftCount = timeOptionCount * dayCount;
   const isFullDay = morningSelected && eveningSelected && !customSelected;
+
+  // Get week dates for day selection
+  const weekDates = date ? getWeekDates(date) : [];
+  const dayNamesKo = ["월", "화", "수", "목", "금"];
+  const dayNamesEn = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const dayNames = language === "ko" ? dayNamesKo : dayNamesEn;
 
   // Get summary of what will be created
   const getTimeSummary = () => {
@@ -298,8 +496,84 @@ export default function ShiftEditorModal({
           {/* Date display */}
           <div className={styles.field}>
             <label className={styles.label}>{t(language, "shifts.date")}</label>
-            <div className={styles.dateDisplay}>{formattedDate}</div>
+            <div className={styles.dateDisplay}>
+              {allSelectedDates.length > 0 
+                ? formatSelectedDates(allSelectedDates)
+                : formattedDate}
+            </div>
           </div>
+
+          {/* Selected dates list - show when multiple dates from calendar */}
+          {!shift && allSelectedDates.length > 1 && (
+            <div className={styles.field}>
+              <label className={styles.label}>
+                {t(language, "shifts.selectedDates")} ({allSelectedDates.length} {t(language, "shifts.daysSelected")})
+              </label>
+              <div className={styles.selectedDatesList}>
+                {allSelectedDates.map((dateStr) => {
+                  const d = new Date(dateStr + "T00:00:00");
+                  const dayOfWeek = d.getDay();
+                  const dayNamesFullKo = ["일", "월", "화", "수", "목", "금", "토"];
+                  const dayNamesFullEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                  const dayName = language === "ko" ? dayNamesFullKo[dayOfWeek] : dayNamesFullEn[dayOfWeek];
+                  return (
+                    <div key={dateStr} className={styles.selectedDateItem}>
+                      <span className={styles.selectedDateText}>
+                        {d.toLocaleDateString(
+                          language === "ko" ? "ko-KR" : "en-US",
+                          { month: "short", day: "numeric", year: "numeric" }
+                        )} ({dayName})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDate(dateStr)}
+                        className={styles.removeDateBtn}
+                        aria-label="Remove date"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Day selection - only show when creating new shift and not showing multi-week selection */}
+          {!shift && allSelectedDates.length <= 1 && (
+            <div className={styles.field}>
+              <label className={styles.label}>
+                {t(language, "shifts.selectDays")}
+                {selectedDays.length > 0 && (
+                  <span className={styles.badge}>
+                    {selectedDays.length} {t(language, "shifts.daysSelected")}
+                  </span>
+                )}
+              </label>
+              <div className={styles.daySelection}>
+                {weekDates.map((weekDate, index) => {
+                  const isSelected = selectedDays.includes(index);
+                  const dateStr = formatDateStr(weekDate);
+                  const dayName = dayNames[index];
+                  const dayNumber = weekDate.getDate();
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleDayToggle(index)}
+                      className={`${styles.dayBtn} ${isSelected ? styles.dayBtnActive : ""}`}
+                    >
+                      <span className={styles.checkbox}>{isSelected ? "✓" : ""}</span>
+                      <div className={styles.dayInfo}>
+                        <span className={styles.dayName}>{dayName}</span>
+                        <span className={styles.dayNumber}>{dayNumber}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Worker select (admin only) */}
           {isAdmin && users.length > 0 && (
@@ -447,10 +721,20 @@ export default function ShiftEditorModal({
 
           {/* Action buttons */}
           <div className={styles.actions}>
+            {(shift || (allSelectedDates.length > 0 && !shift)) && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className={styles.deleteButton}
+                disabled={loading || deleting}
+              >
+                {deleting ? t(language, "shifts.deleting") : t(language, "shifts.delete")}
+              </button>
+            )}
             <button type="button" onClick={onClose} className={styles.cancelButton}>
               {t(language, "shifts.cancel")}
             </button>
-            <button type="submit" className={styles.saveButton} disabled={loading}>
+            <button type="submit" className={styles.saveButton} disabled={loading || deleting}>
               {loading
                 ? t(language, "shifts.saving")
                 : shift

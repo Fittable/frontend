@@ -18,10 +18,11 @@ interface CalendarGridProps {
   users: User[];
   holidays: Holiday[];
   selectedDate: string | null;
+  selectedDates?: string[]; // Multi-day selection
   language: Language;
   displayNamePreference?: DisplayNamePreference;
   isMobile?: boolean;
-  onDayClick: (dateStr: string) => void;
+  onDayClick: (dateStr: string, event?: React.MouseEvent) => void;
   onShiftClick: (shift: Shift) => void;
   onDayDoubleClick: (dateStr: string) => void;
 }
@@ -74,6 +75,7 @@ export default function CalendarGrid({
   users,
   holidays,
   selectedDate,
+  selectedDates = [],
   language,
   displayNamePreference = "nickname",
   isMobile = false,
@@ -202,6 +204,7 @@ export default function CalendarGrid({
           const dayCourses = courseEventsByDate.get(dateStr) || [];
           const groupedShifts = groupShiftsByUser(dayShifts, users, displayNamePreference);
           const isSelected = dateStr === selectedDate;
+          const isMultiSelected = selectedDates.includes(dateStr);
           const isToday = dateStr === todayStr;
           
           // Calculate day of week: 0=Sun, 1=Mon, ..., 6=Sat
@@ -227,11 +230,11 @@ export default function CalendarGrid({
             <div
               key={dateStr}
               className={`${styles.dayCell} ${isSelected ? styles.selected : ""} ${
-                isWeekend ? styles.weekend : ""
-              } ${!isFirstMonth ? styles.secondMonth : ""} ${
+                isMultiSelected ? styles.multiSelected : ""
+              } ${isWeekend ? styles.weekend : ""} ${!isFirstMonth ? styles.secondMonth : ""} ${
                 isPublicHoliday ? styles.publicHoliday : ""
               }`}
-              onClick={() => onDayClick(dateStr)}
+              onClick={(e) => onDayClick(dateStr, e)}
               onDoubleClick={() => onDayDoubleClick(dateStr)}
             >
               <div className={styles.dayHeader}>

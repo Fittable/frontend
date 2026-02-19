@@ -74,6 +74,7 @@ export default function CalendarPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [workMonth, setWorkMonth] = useState<WorkMonth>(() => getWorkMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]); // Multi-day selection
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("week");
   const [viewScope, setViewScope] = useState<"all" | "me">("me");
   const [language, setLanguage] = useState<"ko" | "en">("ko");
@@ -447,6 +448,7 @@ export default function CalendarPage() {
           break;
         case "Escape":
           setSelectedDate(null);
+          setSelectedDates([]);
           setShowModal(false);
           break;
       }
@@ -462,10 +464,30 @@ export default function CalendarPage() {
     setSelectedDate(formatDateStr(date));
   };
 
-  const handleDayClick = (dateStr: string) => {
-    setSelectedDate(dateStr);
-    if (isMobile) {
-      setMobileShiftPanelOpen(true);
+  const handleDayClick = (dateStr: string, event?: React.MouseEvent) => {
+    const isMultiSelect = event && (event.ctrlKey || event.metaKey);
+    
+    if (isMultiSelect && viewMode === "month") {
+      // Multi-select mode: toggle date in selection
+      setSelectedDates((prev) => {
+        if (prev.includes(dateStr)) {
+          const newSelection = prev.filter((d) => d !== dateStr);
+          // Update selectedDate to the last remaining date, or null if empty
+          setSelectedDate(newSelection.length > 0 ? newSelection[newSelection.length - 1] : null);
+          return newSelection;
+        } else {
+          const newSelection = [...prev, dateStr];
+          setSelectedDate(dateStr);
+          return newSelection;
+        }
+      });
+    } else {
+      // Normal click: single selection
+      setSelectedDate(dateStr);
+      setSelectedDates([dateStr]);
+      if (isMobile) {
+        setMobileShiftPanelOpen(true);
+      }
     }
   };
 
@@ -482,6 +504,13 @@ export default function CalendarPage() {
 
   const handleAddShift = () => {
     setEditingShift(null);
+    // If multiple dates are selected, use the first one as the anchor date
+    // The modal will handle showing all selected dates
+    if (selectedDates.length > 0) {
+      if (!selectedDate || !selectedDates.includes(selectedDate)) {
+        setSelectedDate(selectedDates[0]);
+      }
+    }
     setShowModal(true);
   };
 
@@ -502,8 +531,13 @@ export default function CalendarPage() {
     }
   };
 
-  const handleDeleteShift = async (shiftId: string) => {
-    if (!confirm("Delete this shift?")) return;
+  const handleDeleteShift = async (shiftId: string, skipConfirmation: boolean = false) => {
+    if (!skipConfirmation) {
+      const confirmMessage = language === "ko" 
+        ? "이 근무를 삭제하시겠습니까?"
+        : "Are you sure you want to delete this shift?";
+      if (!confirm(confirmMessage)) return;
+    }
     try {
       await api.deleteShift(shiftId);
       await loadShifts();
@@ -646,6 +680,7 @@ export default function CalendarPage() {
                 users={users}
                 holidays={holidays}
                 selectedDate={selectedDate}
+                selectedDates={selectedDates}
                 language={language}
                 displayNamePreference={displayNamePreference}
                 isMobile={true}
@@ -661,6 +696,7 @@ export default function CalendarPage() {
                 users={users}
                 holidays={holidays}
                 selectedDate={selectedDate}
+                selectedDates={selectedDates}
                 language={language}
                 displayNamePreference={displayNamePreference}
                 isMobile={false}
@@ -773,13 +809,22 @@ export default function CalendarPage() {
         <ShiftEditorModal
           shift={editingShift}
           date={selectedDate || ""}
+          selectedDates={viewMode === "month" && !editingShift ? selectedDates : undefined}
           shiftsOnDate={shiftsForDate}
+          allShifts={filteredShifts}
           users={users}
           isAdmin={user.role === "admin"}
           currentUserId={user.id}
           displayNamePreference={displayNamePreference}
           onSave={handleSaveShift}
-          onClose={() => setShowModal(false)}
+          onDelete={handleDeleteShift}
+          onClose={() => {
+            setShowModal(false);
+            // Clear multi-selection when modal closes
+            if (selectedDates.length > 1) {
+              setSelectedDates([]);
+            }
+          }}
         />
       )}
     </div>

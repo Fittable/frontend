@@ -72,6 +72,11 @@
   background: var(--bg-active);
 }
 
+.dayCell.multiSelected {
+  background: var(--accent-subtle);
+  border: 2px solid var(--accent);
+}
+
 .dayCell.weekend {
   background: rgba(0, 0, 0, 0.1);
 }

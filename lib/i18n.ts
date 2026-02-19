@@ -44,6 +44,12 @@ export type TranslationKey =
   | "shifts.create"
   | "shifts.edit"
   | "shifts.errorNoSelection"
+  | "shifts.selectDays"
+  | "shifts.daysSelected"
+  | "shifts.errorNoDaySelected"
+  | "shifts.selectedDates"
+  | "shifts.delete"
+  | "shifts.deleting"
   // Login
   | "login.title"
   | "login.subtitle"
@@ -125,6 +131,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.create": "생성",
     "shifts.edit": "수정",
     "shifts.errorNoSelection": "최소 하나의 근무 옵션을 선택해주세요",
+    "shifts.selectDays": "날짜 선택",
+    "shifts.daysSelected": "일",
+    "shifts.errorNoDaySelected": "최소 하나의 날짜를 선택해주세요",
+    "shifts.selectedDates": "선택된 날짜",
+    "shifts.delete": "삭제",
+    "shifts.deleting": "삭제 중...",
 
     // Login
     "login.title": "핏테이블",
@@ -207,6 +219,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.create": "Create",
     "shifts.edit": "Edit",
     "shifts.errorNoSelection": "Please select at least one shift option",
+    "shifts.selectDays": "Select Days",
+    "shifts.daysSelected": "days",
+    "shifts.errorNoDaySelected": "Please select at least one day",
+    "shifts.selectedDates": "Selected Dates",
+    "shifts.delete": "Delete",
+    "shifts.deleting": "Deleting...",
 
     // Login
     "login.title": "Fittable",
