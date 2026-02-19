@@ -43,6 +43,7 @@ export type TranslationKey =
   | "shifts.update"
   | "shifts.create"
   | "shifts.edit"
+  | "shifts.errorNoSelection"
   // Login
   | "login.title"
   | "login.subtitle"
@@ -123,6 +124,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.update": "수정",
     "shifts.create": "생성",
     "shifts.edit": "수정",
+    "shifts.errorNoSelection": "최소 하나의 근무 옵션을 선택해주세요",
 
     // Login
     "login.title": "핏테이블",
@@ -204,6 +206,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.update": "Update",
     "shifts.create": "Create",
     "shifts.edit": "Edit",
+    "shifts.errorNoSelection": "Please select at least one shift option",
 
     // Login
     "login.title": "Fittable",

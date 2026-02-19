@@ -52,7 +52,6 @@ export default function ShiftEditorModal({
   const [vacationMode, setVacationMode] = useState(false);
   const [customStart, setCustomStart] = useState("13:00");
   const [customEnd, setCustomEnd] = useState("14:45");
-  const [note, setNote] = useState("");
   const [userId, setUserId] = useState(currentUserId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -98,50 +97,56 @@ export default function ShiftEditorModal({
         setCustomEnd(customEntry.end ?? "14:45");
       }
 
-      setNote(shift.note || "");
       setUserId(shift.user_id);
     } else {
-      // New shift - default to morning
-      setMorningSelected(true);
+      // New shift - no selection by default
+      setMorningSelected(false);
       setEveningSelected(false);
       setCustomSelected(false);
       setVacationMode(false);
       setCustomStart("13:00");
       setCustomEnd("14:45");
-      setNote("");
       setUserId(currentUserId);
     }
   }, [shift, currentUserId, shiftsOnDate]);
 
-  // Ensure at least one option is selected
+  // Toggle handlers - allow unchecking freely
   const handleMorningToggle = () => {
-    const newValue = !morningSelected;
-    // If turning off and nothing else selected, don't allow
-    if (!newValue && !eveningSelected && !customSelected) return;
-    setMorningSelected(newValue);
+    setMorningSelected(!morningSelected);
   };
 
   const handleEveningToggle = () => {
-    const newValue = !eveningSelected;
-    if (!newValue && !morningSelected && !customSelected) return;
-    setEveningSelected(newValue);
+    setEveningSelected(!eveningSelected);
   };
 
   const handleCustomToggle = () => {
-    const newValue = !customSelected;
-    if (!newValue && !morningSelected && !eveningSelected) return;
-    setCustomSelected(newValue);
+    setCustomSelected(!customSelected);
   };
 
   const handleFullDaySelect = () => {
-    setMorningSelected(true);
-    setEveningSelected(true);
-    setCustomSelected(false);
+    const isCurrentlyFullDay = morningSelected && eveningSelected && !customSelected;
+    if (isCurrentlyFullDay) {
+      // Uncheck full day: uncheck both morning and evening
+      setMorningSelected(false);
+      setEveningSelected(false);
+    } else {
+      // Check full day: check both morning and evening, uncheck custom
+      setMorningSelected(true);
+      setEveningSelected(true);
+      setCustomSelected(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    // Validate that at least one shift option is selected
+    if (!shift && !morningSelected && !eveningSelected && !customSelected) {
+      setError(t(language, "shifts.errorNoSelection"));
+      return;
+    }
+    
     setLoading(true);
 
     const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
@@ -198,7 +203,6 @@ export default function ShiftEditorModal({
           await api.updateShift(id, {
             start_time: toTime(start),
             end_time: toTime(end),
-            note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
@@ -207,7 +211,6 @@ export default function ShiftEditorModal({
             date,
             start_time: toTime(block.start),
             end_time: toTime(block.end),
-            note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
@@ -218,7 +221,6 @@ export default function ShiftEditorModal({
             date,
             start_time: toTime(times.morning.start),
             end_time: toTime(times.morning.end),
-            note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
@@ -227,7 +229,6 @@ export default function ShiftEditorModal({
             date,
             start_time: toTime(times.evening.start),
             end_time: toTime(times.evening.end),
-            note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
@@ -236,7 +237,6 @@ export default function ShiftEditorModal({
             date,
             start_time: toTime(customStart),
             end_time: toTime(customEnd),
-            note: note || undefined,
             user_id: isAdmin ? userId : undefined,
           });
         }
@@ -440,18 +440,6 @@ export default function ShiftEditorModal({
                 : t(language, "shifts.summaryTimeLabel")}
             </span>
             <span className={styles.summaryValue}>{getTimeSummary()}</span>
-          </div>
-
-          {/* Note input */}
-          <div className={styles.field}>
-            <label className={styles.label}>{t(language, "shifts.noteOptional")}</label>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className={styles.input}
-              placeholder={t(language, "shifts.notePlaceholder")}
-            />
           </div>
 
           {/* Error display */}
