@@ -151,7 +151,12 @@ export const api = {
     }),
 
   // Schedule PDF download
-  downloadSchedulePDF: async (month?: string, startDate?: string, endDate?: string): Promise<void> => {
+  downloadSchedulePDF: async (
+    month?: string, 
+    startDate?: string, 
+    endDate?: string,
+    filenameOverride?: string
+  ): Promise<void> => {
     const params = new URLSearchParams();
     if (startDate && endDate) {
       params.append("start_date", startDate);
@@ -175,13 +180,18 @@ export const api = {
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     
-    // Get filename from Content-Disposition header or use default
-    const contentDisposition = res.headers.get("Content-Disposition");
-    let filename = month ? `schedule-${month}.pdf` : "schedule.pdf";
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "");
+    // Use provided filename override, or get from Content-Disposition header, or use default
+    let filename = filenameOverride;
+    if (!filename) {
+      const contentDisposition = res.headers.get("Content-Disposition");
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+      if (!filename) {
+        filename = month ? `schedule-${month}.pdf` : "schedule.pdf";
       }
     }
 
