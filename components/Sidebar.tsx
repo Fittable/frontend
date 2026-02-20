@@ -8,6 +8,7 @@ import MiniCalendar from "./MiniCalendar";
 import ProfileCard from "./ProfileCard";
 import { t, Language } from "@/lib/i18n";
 import { getDisplayName } from "@/lib/types";
+import { useTheme } from "@/components/ThemeProvider";
 import styles from "./Sidebar.module.css";
 
 // Worker color palette
@@ -69,6 +70,7 @@ export default function Sidebar({
   onDownloadWorklog,
   downloadDisabled,
 }: SidebarProps) {
+  const { theme, toggleTheme } = useTheme();
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
   const [profileImageError, setProfileImageError] = useState(false);
@@ -185,6 +187,21 @@ export default function Sidebar({
 
         {/* User Info */}
         <div className={styles.userSection}>
+          {/* Theme toggle */}
+          <div className={styles.themeRow}>
+            <span className={styles.themeLabel}>
+              {language === "ko" ? "테마" : "Theme"}
+            </span>
+            <button
+              type="button"
+              className={styles.themeToggle}
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? (language === "ko" ? "라이트 모드로 전환" : "Switch to light mode") : (language === "ko" ? "다크 모드로 전환" : "Switch to dark mode")}
+              title={theme === "dark" ? (language === "ko" ? "라이트 모드" : "Light mode") : (language === "ko" ? "다크 모드" : "Dark mode")}
+            >
+              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+            </button>
+          </div>
           {/* Download Buttons */}
           {(onDownloadSchedulePDF || onDownloadWorklog) && (
             <div className={styles.downloadSection}>
@@ -290,6 +307,23 @@ function DownloadIcon() {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7,10 12,15 17,10" />
       <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
   );
 }

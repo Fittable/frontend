@@ -65,8 +65,8 @@
 }
 
 .scopeToggleButtonActive {
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 
 .right {
@@ -100,8 +100,8 @@
 }
 
 .langButtonActive {
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 
 .viewToggle {
@@ -132,8 +132,8 @@
 }
 
 .viewToggleButtonActive {
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 
 .todayButton {
@@ -157,16 +157,16 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent-text, #1d4ed8);
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  border: 1px solid var(--accent-soft, rgba(59, 130, 246, 0.24));
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-subtle);
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
 .downloadButton:hover:not(:disabled) {
-  background: var(--accent-soft-strong, rgba(59, 130, 246, 0.2));
-  border-color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft-strong);
+  border-color: var(--accent-text);
 }
 
 .downloadButton:disabled {
@@ -287,8 +287,8 @@
 }
 
 .mobileScopeButtonActive {
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 
 .mobileLangToggle {
@@ -317,8 +317,8 @@
 }
 
 .mobileLangButtonActive {
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 
 .mobileBottom {

@@ -72,7 +72,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "0.5rem",
   },
   empty: {
-    color: "#999",
+    color: "var(--text-muted)",
     textAlign: "center",
     padding: "1rem 0",
     fontSize: "0.875rem",
@@ -82,9 +82,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     alignItems: "flex-start",
     padding: "0.75rem",
-    background: "#f9f9f9",
+    background: "var(--bg-card)",
     borderRadius: "4px",
-    border: "1px solid #eee",
+    border: "1px solid var(--border-default)",
   },
   itemMain: {
     flex: 1,
@@ -95,12 +95,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   username: {
     fontSize: "0.75rem",
-    color: "#666",
+    color: "var(--text-secondary)",
     marginTop: "0.125rem",
   },
   note: {
     fontSize: "0.75rem",
-    color: "#888",
+    color: "var(--text-muted)",
     marginTop: "0.25rem",
   },
   actions: {
@@ -110,19 +110,19 @@ const styles: { [key: string]: React.CSSProperties } = {
   editBtn: {
     padding: "0.25rem 0.5rem",
     fontSize: "0.75rem",
-    border: "1px solid #ddd",
-    background: "white",
+    border: "1px solid var(--border-default)",
+    background: "var(--bg-card)",
     borderRadius: "3px",
     cursor: "pointer",
   },
   deleteBtn: {
     padding: "0.25rem 0.5rem",
     fontSize: "0.875rem",
-    border: "1px solid #ddd",
-    background: "white",
+    border: "1px solid var(--border-default)",
+    background: "var(--bg-card)",
     borderRadius: "3px",
     cursor: "pointer",
-    color: "#c00",
+    color: "var(--error-text)",
   },
 };
 

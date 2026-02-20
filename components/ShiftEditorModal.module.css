@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -280,10 +280,10 @@
 /* Error */
 .error {
   padding: 10px 12px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   border-radius: 6px;
-  color: #f87171;
+  color: var(--error-text);
   font-size: 13px;
 }
 
@@ -334,17 +334,17 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
   transition: all var(--transition-fast);
   margin-right: auto;
 }
 
 .deleteButton:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.5);
-  color: #ef4444;
+  background: var(--error-border);
+  border-color: var(--error-text);
+  color: var(--error-text);
 }
 
 .deleteButton:disabled {

@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   z-index: 1001;
   display: flex;
   align-items: flex-end;
@@ -28,7 +28,7 @@
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--overlay-panel-shadow);
 }
 
 @keyframes slideUp {
@@ -199,13 +199,13 @@
 }
 
 .deleteButton {
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--error-text);
+  border-color: var(--error-border);
 }
 
 .deleteButton:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: #ef4444;
+  background: var(--error-bg);
+  border-color: var(--error-text);
 }
 
 .footer {
@@ -218,7 +218,7 @@
   padding: 12px;
   border-radius: 8px;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
   font-size: 14px;
   font-weight: 600;
   transition: background var(--transition-fast);

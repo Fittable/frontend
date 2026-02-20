@@ -78,7 +78,7 @@
 }
 
 .dayCell.weekend {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--bg-weekend);
 }
 
 .dayCell.weekend.otherMonth {
@@ -128,19 +128,19 @@
 
 /* Holiday styles */
 .publicHoliday {
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--error-bg);
 }
 
 .publicHoliday.weekend {
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--error-border);
 }
 
 .publicHoliday:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--error-bg);
 }
 
 .holidayDay {
-  color: #ef4444 !important;
+  color: var(--error-text) !important;
 }
 
 .holidayName {
@@ -154,7 +154,7 @@
 }
 
 .publicHolidayName {
-  color: #ef4444;
+  color: var(--error-text);
   font-weight: 500;
 }
 
@@ -211,8 +211,8 @@
   flex-shrink: 0;
   padding: 0 6px;
   border-radius: 4px;
-  border-left: 3px solid #3b82f6;
-  background: rgba(59, 130, 246, 0.15);
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -221,7 +221,7 @@
 .courseBarText {
   font-size: 10px;
   font-weight: 500;
-  color: #2563eb;
+  color: var(--accent-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

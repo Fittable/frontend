@@ -45,7 +45,7 @@
 }
 
 .dayHeaderHoliday {
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--error-bg);
 }
 
 .dayHeaderCentered {
@@ -85,7 +85,7 @@
 
 .dayNumberToday {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .dayMonth {
@@ -100,7 +100,7 @@
 }
 
 .holidayLabelPublic {
-  color: #ef4444;
+  color: var(--error-text);
   font-weight: 500;
 }
 
@@ -167,7 +167,7 @@
 
 .timeSlotCell {
   height: 40px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .shiftBlock {
@@ -181,9 +181,9 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.16);
+  background: var(--accent-soft);
   cursor: pointer;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-md);
   backdrop-filter: blur(8px);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast),
     background var(--transition-fast);
@@ -191,7 +191,7 @@
 
 .shiftBlock:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+  box-shadow: var(--shadow-lg);
 }
 
 .shiftBlockTitle {
@@ -212,20 +212,20 @@
   left: 4px;
   right: 4px;
   border-radius: 6px;
-  border-left: 3px solid #2563eb;
+  border-left: 3px solid var(--accent);
   padding: 4px 6px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  background: rgba(37, 99, 235, 0.14);
+  background: var(--accent-soft);
   pointer-events: none;
 }
 
 .courseBlockTitle {
   font-size: 11px;
   font-weight: 600;
-  color: #1d4ed8;
+  color: var(--accent-text);
 }
 
 .courseBlockTime {

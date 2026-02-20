@@ -298,12 +298,10 @@ export default function MobileDayCalendar({
                   return (
                     <div
                       key={`course-${course.course_code}-${course.start_time}`}
-                      className={styles.eventBlock}
+                      className={`${styles.eventBlock} ${styles.eventBlockCourse}`}
                       style={{
                         top: `${top}%`,
                         height: `${height}%`,
-                        borderLeftColor: "#2563eb",
-                        backgroundColor: "rgba(37, 99, 235, 0.14)",
                       }}
                     >
                       <span className={styles.eventTime}>
@@ -357,12 +355,10 @@ export default function MobileDayCalendar({
                               return (
                                 <div
                                   key={`course-${course.course_code}-${course.start_time}`}
-                                  className={styles.eventBlock}
+                                  className={`${styles.eventBlock} ${styles.eventBlockCourse}`}
                                   style={{
                                     top: `${top}%`,
                                     height: `${height}%`,
-                                    borderLeftColor: "#2563eb",
-                                    backgroundColor: "rgba(37, 99, 235, 0.14)",
                                   }}
                                 >
                                   <span className={styles.eventTime}>
@@ -393,12 +389,10 @@ export default function MobileDayCalendar({
                           return (
                             <div
                               key={`course-${course.course_code}-${course.start_time}`}
-                              className={styles.eventBlock}
+                              className={`${styles.eventBlock} ${styles.eventBlockCourse}`}
                               style={{
                                 top: `${top}%`,
                                 height: `${height}%`,
-                                borderLeftColor: "#2563eb",
-                                backgroundColor: "rgba(37, 99, 235, 0.14)",
                               }}
                             >
                               <span className={styles.eventTime}>

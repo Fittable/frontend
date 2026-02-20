@@ -108,7 +108,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   header: {
     display: "grid",
     gridTemplateColumns: "repeat(7, 1fr)",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid var(--border-default)",
     marginBottom: "0.5rem",
   },
   headerCell: {
@@ -116,7 +116,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: "center",
     fontWeight: 500,
     fontSize: "0.75rem",
-    color: "#666",
+    color: "var(--text-secondary)",
   },
   grid: {
     display: "grid",
@@ -130,7 +130,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   dayCell: {
     aspectRatio: "1",
     padding: "0.5rem",
-    border: "1px solid #eee",
+    border: "1px solid var(--border-default)",
     borderRadius: "4px",
     cursor: "pointer",
     display: "flex",
@@ -138,14 +138,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "flex-start",
     gap: "0.25rem",
     transition: "background 0.15s",
+    color: "var(--text-primary)",
   },
   selectedCell: {
-    background: "#333",
-    color: "white",
-    borderColor: "#333",
+    background: "var(--accent)",
+    color: "var(--on-accent)",
+    borderColor: "var(--accent)",
   },
   todayCell: {
-    borderColor: "#333",
+    borderColor: "var(--accent)",
     borderWidth: "2px",
   },
   dayNumber: {
@@ -154,7 +155,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   shiftBadge: {
     fontSize: "0.625rem",
-    background: "#e0e0e0",
+    background: "var(--bg-hover)",
     padding: "0.125rem 0.25rem",
     borderRadius: "2px",
   },

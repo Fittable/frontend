@@ -1,6 +1,8 @@
-/* Notion Calendar Dark Theme */
+/* Fittable – Dark (default) and Light theme */
 
-:root {
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
   /* Background colors */
   --bg-primary: #191919;
   --bg-secondary: #202020;
@@ -8,18 +10,28 @@
   --bg-card: #262626;
   --bg-hover: #2f2f2f;
   --bg-active: #363636;
-  
+  --overlay: rgba(0, 0, 0, 0.7);
+  --overlay-panel-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
   /* Text colors */
   --text-primary: #ebebeb;
   --text-secondary: #9b9b9b;
   --text-muted: #5c5c5c;
   --text-inverse: #191919;
-  
   /* Accent colors */
   --accent: #2383e2;
   --accent-hover: #1a6bc2;
   --accent-subtle: rgba(35, 131, 226, 0.15);
-  
+  --accent-soft: rgba(35, 131, 226, 0.15);
+  --accent-soft-strong: rgba(35, 131, 226, 0.25);
+  --accent-text: #5ba3f5;
+  /* Semantic: error */
+  --error-bg: rgba(239, 68, 68, 0.15);
+  --error-border: rgba(239, 68, 68, 0.3);
+  --error-text: #f87171;
+  /* On-accent (e.g. button text on accent background) */
+  --on-accent: #ffffff;
+  /* Weekend cell tint */
+  --bg-weekend: rgba(0, 0, 0, 0.06);
   /* Worker colors for shift bars */
   --worker-red: #f87171;
   --worker-orange: #fb923c;
@@ -29,27 +41,55 @@
   --worker-purple: #a78bfa;
   --worker-pink: #f472b6;
   --worker-cyan: #22d3d8;
-  
   /* Border colors */
   --border-default: #333;
   --border-subtle: #2a2a2a;
   --border-strong: #444;
-  
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  
   /* Layout */
   --sidebar-width: 260px;
   --header-height: 56px;
-  
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ebebeb;
+  --bg-sidebar: #fafafa;
+  --bg-card: #ffffff;
+  --bg-hover: #eeeeee;
+  --bg-active: #e0e0e0;
+  --overlay: rgba(0, 0, 0, 0.4);
+  --overlay-panel-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  --text-primary: #1a1a1a;
+  --text-secondary: #525252;
+  --text-muted: #737373;
+  --text-inverse: #f5f5f5;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-subtle: rgba(37, 99, 235, 0.12);
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --accent-soft-strong: rgba(37, 99, 235, 0.2);
+  --accent-text: #1d4ed8;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --error-border: rgba(239, 68, 68, 0.3);
+  --error-text: #dc2626;
+  --on-accent: #ffffff;
+  --bg-weekend: rgba(0, 0, 0, 0.04);
+  --border-default: #e5e5e5;
+  --border-subtle: #ebebeb;
+  --border-strong: #d4d4d4;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 * {
@@ -130,8 +170,8 @@ input::placeholder {
   color: var(--text-muted);
 }
 
-input[type="time"] {
-  color-scheme: dark;
+[data-theme="light"] input[type="time"] {
+  color-scheme: light;
 }
 
 select {
@@ -174,7 +214,8 @@ select {
 
 /* Responsive breakpoints via media queries */
 @media (max-width: 768px) {
-  :root {
+  :root,
+  [data-theme="light"] {
     --sidebar-width: 0px;
   }
 }

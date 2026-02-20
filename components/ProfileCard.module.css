@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--overlay);
   z-index: 200;
   animation: fadeIn 0.15s ease;
 }
@@ -14,10 +14,10 @@
   width: min(420px, calc(100vw - 32px));
   max-height: 90vh;
   overflow-y: auto;
-  background: var(--bg-card, #fff);
+  background: var(--bg-card);
   border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border-default, #e5e7eb);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-default);
   z-index: 201;
   animation: scaleIn 0.2s ease;
 }
@@ -123,7 +123,7 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent);
 }
 
 .select {
@@ -141,14 +141,14 @@
 
 .select:focus {
   outline: none;
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent);
 }
 
 .langToggle {
   display: inline-flex;
   align-items: center;
   padding: 2px;
-  background: var(--bg-secondary, #f3f4f6);
+  background: var(--bg-secondary);
   border-radius: 999px;
 }
 
@@ -170,8 +170,8 @@
 }
 
 .langButtonActive {
-  background: var(--accent-soft, rgba(59, 130, 246, 0.12));
-  color: var(--accent-text, #1d4ed8);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
 
 .actions {
@@ -189,7 +189,7 @@
   font-weight: 500;
   border: none;
   border-radius: 6px;
-  background: var(--accent, #3b82f6);
+  background: var(--accent);
   color: white;
   cursor: pointer;
   transition: opacity var(--transition-fast);

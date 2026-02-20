@@ -84,7 +84,7 @@
 }
 
 .dayHeaderHoliday {
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--error-bg);
 }
 
 .dayHeaderLabel {
@@ -116,7 +116,7 @@
 
 .dayNumberToday {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .holidayLabel {
@@ -129,7 +129,7 @@
 }
 
 .holidayLabelPublic {
-  color: #ef4444;
+  color: var(--error-text);
   font-weight: 500;
 }
 
@@ -205,7 +205,7 @@
 
 .timeSlotCell {
   height: 48px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .eventBlock {
@@ -220,13 +220,18 @@
   align-items: flex-start;
   justify-content: flex-start;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .eventBlock:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
+}
+
+.eventBlockCourse {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .eventTime {

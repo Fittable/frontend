@@ -78,8 +78,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "0.75rem 1.5rem",
-    background: "white",
-    borderBottom: "1px solid #e5e5e5",
+    background: "var(--bg-secondary)",
+    borderBottom: "1px solid var(--border-default)",
   },
   left: {
     display: "flex",
@@ -90,6 +90,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     fontSize: "1.25rem",
     fontWeight: 600,
+    color: "var(--text-primary)",
   },
   monthNav: {
     display: "flex",
@@ -98,22 +99,26 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   navButton: {
     padding: "0.25rem 0.5rem",
-    border: "1px solid #ddd",
-    background: "white",
+    border: "1px solid var(--border-default)",
+    background: "var(--bg-card)",
     borderRadius: "4px",
     cursor: "pointer",
     fontSize: "1rem",
+    color: "var(--text-primary)",
   },
   monthLabel: {
     minWidth: "140px",
     textAlign: "center",
     fontWeight: 500,
+    color: "var(--text-primary)",
   },
   select: {
     padding: "0.375rem 0.5rem",
-    border: "1px solid #ddd",
+    border: "1px solid var(--border-default)",
     borderRadius: "4px",
     fontSize: "0.875rem",
+    background: "var(--bg-card)",
+    color: "var(--text-primary)",
   },
   right: {
     display: "flex",
@@ -122,17 +127,19 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   userInfo: {
     fontSize: "0.875rem",
+    color: "var(--text-primary)",
   },
   role: {
-    color: "#666",
+    color: "var(--text-secondary)",
   },
   logoutButton: {
     padding: "0.375rem 0.75rem",
-    border: "1px solid #ddd",
-    background: "white",
+    border: "1px solid var(--border-default)",
+    background: "var(--bg-card)",
     borderRadius: "4px",
     cursor: "pointer",
     fontSize: "0.875rem",
+    color: "var(--text-primary)",
   },
 };
 
