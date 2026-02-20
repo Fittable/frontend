@@ -299,8 +299,8 @@ export default function ShiftEditorModal({
       return;
     }
 
-    // Validate that at least one day is selected when creating new shift
-    if (!shift && allSelectedDates.length === 0 && selectedDays.length === 0) {
+    // Validate that at least one day is available when creating new shift
+    if (!shift && allSelectedDates.length === 0 && !date) {
       setError(t(language, "shifts.errorNoDaySelected"));
       return;
     }
@@ -374,10 +374,10 @@ export default function ShiftEditorModal({
         }
       } else {
         // Creating new shift(s) - create for each selected day and each selected time option
-        // Use allSelectedDates if available (from calendar multi-selection), otherwise use week-based selection
+        // Use allSelectedDates if available (from calendar multi-selection), otherwise use the anchor date
         const datesToCreate = allSelectedDates.length > 0 
           ? allSelectedDates 
-          : selectedDays.map((dayIndex) => formatDateStr(getWeekDates(date)[dayIndex]));
+          : [date];
 
         for (const targetDate of datesToCreate) {
           if (morningSelected) {
@@ -455,15 +455,9 @@ export default function ShiftEditorModal({
 
   // Count how many shifts will be created
   const timeOptionCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + (customSelected ? 1 : 0);
-  const dayCount = shift ? 1 : (allSelectedDates.length > 0 ? allSelectedDates.length : selectedDays.length);
+  const dayCount = shift ? 1 : (allSelectedDates.length > 0 ? allSelectedDates.length : 1);
   const shiftCount = timeOptionCount * dayCount;
   const isFullDay = morningSelected && eveningSelected && !customSelected;
-
-  // Get week dates for day selection
-  const weekDates = date ? getWeekDates(date) : [];
-  const dayNamesKo = ["월", "화", "수", "목", "금"];
-  const dayNamesEn = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-  const dayNames = language === "ko" ? dayNamesKo : dayNamesEn;
 
   // Get summary of what will be created
   const getTimeSummary = () => {
@@ -539,41 +533,6 @@ export default function ShiftEditorModal({
             </div>
           )}
 
-          {/* Day selection - only show when creating new shift and not showing multi-week selection */}
-          {!shift && allSelectedDates.length <= 1 && (
-            <div className={styles.field}>
-              <label className={styles.label}>
-                {t(language, "shifts.selectDays")}
-                {selectedDays.length > 0 && (
-                  <span className={styles.badge}>
-                    {selectedDays.length} {t(language, "shifts.daysSelected")}
-                  </span>
-                )}
-              </label>
-              <div className={styles.daySelection}>
-                {weekDates.map((weekDate, index) => {
-                  const isSelected = selectedDays.includes(index);
-                  const dateStr = formatDateStr(weekDate);
-                  const dayName = dayNames[index];
-                  const dayNumber = weekDate.getDate();
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handleDayToggle(index)}
-                      className={`${styles.dayBtn} ${isSelected ? styles.dayBtnActive : ""}`}
-                    >
-                      <span className={styles.checkbox}>{isSelected ? "✓" : ""}</span>
-                      <div className={styles.dayInfo}>
-                        <span className={styles.dayName}>{dayName}</span>
-                        <span className={styles.dayNumber}>{dayNumber}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Worker select (admin only) */}
           {isAdmin && users.length > 0 && (
