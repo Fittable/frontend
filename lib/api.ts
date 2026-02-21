@@ -203,5 +203,49 @@ export const api = {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   },
+
+  // Work log DOCX download (교비근로 근무학생 근무일지)
+  downloadWorkLogDocx: async (month: string): Promise<void> => {
+    const params = new URLSearchParams({ month });
+    const res = await fetch(`${API_BASE}/work-log/docx/preview?${params}`, {
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: `Request failed with status ${res.status}` }));
+      const message = error.detail ?? error.message ?? `Request failed with status ${res.status}`;
+      throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const contentDisposition = res.headers.get("Content-Disposition");
+    let filename = "근무일지.docx";
+    if (contentDisposition) {
+      const rfc5987Match = contentDisposition.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/i);
+      if (rfc5987Match) {
+        try {
+          filename = decodeURIComponent(rfc5987Match[1].trim());
+        } catch {
+          // keep default
+        }
+      } else {
+        const legacyMatch = contentDisposition.match(/filename\s*=\s*"([^"]*)"/);
+        if (legacyMatch) filename = legacyMatch[1];
+        else {
+          const unquotedMatch = contentDisposition.match(/filename\s*=\s*([^;\s]+)/);
+          if (unquotedMatch) filename = unquotedMatch[1].replace(/^"|"$/g, "");
+        }
+      }
+    }
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
 };
 

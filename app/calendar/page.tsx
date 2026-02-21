@@ -383,6 +383,23 @@ export default function CalendarPage() {
     }
   };
 
+  const handleDownloadWorklogDocx = async () => {
+    if (!user) return;
+
+    const month = `${workMonth.startYear}-${String(workMonth.startMonth + 1).padStart(2, "0")}`;
+
+    setDownloadingPdf(true);
+    try {
+      await api.downloadWorkLogDocx(month);
+    } catch (err) {
+      console.error("Failed to download work log DOCX:", err);
+      const message = language === "ko" ? "근무일지(Word) 다운로드에 실패했습니다." : "Failed to download work log (Word).";
+      alert(err instanceof Error ? err.message : message);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const handleDownloadSchedulePDF = async () => {
     if (!user) return;
 
@@ -623,6 +640,7 @@ export default function CalendarPage() {
         onProfileUpdated={handleProfileUpdated}
         onDownloadSchedulePDF={handleDownloadSchedulePDF}
         onDownloadWorklog={handleDownloadWorklog}
+        onDownloadWorklogDocx={handleDownloadWorklogDocx}
         downloadDisabled={downloadingPdf}
       />
 

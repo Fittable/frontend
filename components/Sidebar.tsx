@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, Shift, DisplayNamePreference, ProfileSettings } from "@/lib/types";
 import { WorkMonth } from "@/lib/workMonth";
 import { api } from "@/lib/api";
@@ -46,6 +46,7 @@ interface SidebarProps {
   onProfileUpdated?: (profile: ProfileSettings) => void;
   onDownloadSchedulePDF?: () => void;
   onDownloadWorklog?: () => void;
+  onDownloadWorklogDocx?: () => void;
   downloadDisabled?: boolean;
 }
 
@@ -68,6 +69,7 @@ export default function Sidebar({
   onProfileUpdated,
   onDownloadSchedulePDF,
   onDownloadWorklog,
+  onDownloadWorklogDocx,
   downloadDisabled,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
@@ -75,6 +77,20 @@ export default function Sidebar({
   const [userHours, setUserHours] = useState<Record<string, number>>({});
   const [profileImageError, setProfileImageError] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
+  const [workLogMenuOpen, setWorkLogMenuOpen] = useState(false);
+  const workLogDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close work log dropdown when clicking outside
+  useEffect(() => {
+    if (!workLogMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (workLogDropdownRef.current && !workLogDropdownRef.current.contains(e.target as Node)) {
+        setWorkLogMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [workLogMenuOpen]);
 
   // Fetch hours for the current work month (25th to 24th)
   // Re-fetch when shifts change (after create/update/delete); depend on shifts so edits (same length) also trigger refetch
@@ -203,7 +219,7 @@ export default function Sidebar({
             </button>
           </div>
           {/* Download Buttons */}
-          {(onDownloadSchedulePDF || onDownloadWorklog) && (
+          {(onDownloadSchedulePDF || onDownloadWorklog || onDownloadWorklogDocx) && (
             <div className={styles.downloadSection}>
               {onDownloadSchedulePDF && (
                 <button
@@ -216,16 +232,55 @@ export default function Sidebar({
                   <span>{language === "ko" ? "시간표" : "Schedule"}</span>
                 </button>
               )}
-              {onDownloadWorklog && (
-                <button
-                  type="button"
-                  className={styles.downloadButton}
-                  onClick={onDownloadWorklog}
-                  disabled={downloadDisabled}
+              {(onDownloadWorklog || onDownloadWorklogDocx) && (
+                <div
+                  ref={workLogDropdownRef}
+                  className={styles.workLogDropdownWrap}
                 >
-                  <DownloadIcon />
-                  <span>{language === "ko" ? "근무일지" : "Work Log"}</span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.downloadButton}
+                    disabled={downloadDisabled}
+                    aria-haspopup="true"
+                    aria-expanded={workLogMenuOpen}
+                    onClick={() => setWorkLogMenuOpen((open) => !open)}
+                  >
+                    <DownloadIcon />
+                    <span>{language === "ko" ? "근무일지" : "Work Log"}</span>
+                  </button>
+                  {workLogMenuOpen && (
+                    <div className={styles.workLogDropdown} role="menu">
+                      {onDownloadWorklog && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className={styles.workLogDropdownItem}
+                          onClick={() => {
+                            onDownloadWorklog();
+                            setWorkLogMenuOpen(false);
+                          }}
+                          disabled={downloadDisabled}
+                        >
+                          PDF
+                        </button>
+                      )}
+                      {onDownloadWorklogDocx && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className={styles.workLogDropdownItem}
+                          onClick={() => {
+                            onDownloadWorklogDocx();
+                            setWorkLogMenuOpen(false);
+                          }}
+                          disabled={downloadDisabled}
+                        >
+                          {language === "ko" ? "Word" : "Word"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
