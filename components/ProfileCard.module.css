@@ -328,6 +328,22 @@
   color: var(--text-primary);
 }
 
+/* Tilted card wrapper (React Bits–style 3D tilt) */
+.idCardTiltWrap {
+  display: block;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+/* Glossy shine overlay in front of card */
+.idCardGloss {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
 /* Student ID card – larger portrait size, no scroll */
 .idCard {
   width: 300px;
@@ -345,7 +361,7 @@
 }
 
 .idCardStripe {
-  background: linear-gradient(135deg, #4F0028 0%, #6b0036 100%);
+  background: linear-gradient(135deg, #3A051F 0%, #4d0828 100%);
   padding: 10px 12px;
   text-align: center;
 }
@@ -363,6 +379,25 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
+  position: relative;
+}
+
+.idCardBottomRow {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  min-height: 0;
+}
+
+.idCardBodyMascot {
+  flex: 0 0 175px;
+  align-self: stretch;
+  background-color: transparent;
+  background-image: url("/id-card-mascot.png");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.7;
 }
 
 /* Photo: passport ratio 35:45 */
@@ -388,13 +423,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #4F0028;
+  background: #3A051F;
   color: white;
   font-weight: 700;
   font-size: 36px;
 }
 
 .idCardInfo {
+  flex: 1;
+  min-width: 0;
   padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;

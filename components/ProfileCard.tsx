@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/lib/api";
 import { ProfileSettings, ProfileSettingsUpdate, DisplayNamePreference } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
@@ -377,11 +377,94 @@ export default function ProfileCard({
             >
               <CloseIcon />
             </button>
-            <StudentIdCard profile={profile} language={language} />
+            <TiltedCard className={styles.idCardTiltWrap}>
+              <StudentIdCard profile={profile} language={language} />
+            </TiltedCard>
           </div>
         </>
       )}
     </>
+  );
+}
+
+const TILT_MAX = 12;
+const TILT_SCALE = 1.02;
+
+function TiltedCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [gloss, setGloss] = useState<{ x: number; y: number } | null>(null);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const xNorm = (e.clientX - centerX) / (rect.width / 2);
+      const yNorm = (e.clientY - centerY) / (rect.height / 2);
+      setTilt({
+        x: Math.max(-1, Math.min(1, yNorm)) * -TILT_MAX,
+        y: Math.max(-1, Math.min(1, xNorm)) * TILT_MAX,
+      });
+      const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+      const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+      setGloss({ x: xPct, y: yPct });
+      setIsHovered(true);
+    },
+    []
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+    setGloss(null);
+    setIsHovered(false);
+  }, []);
+
+  const scale = isHovered ? TILT_SCALE : 1;
+  const transform = `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(${scale}, ${scale}, ${scale})`;
+
+  const glossStyle: React.CSSProperties =
+    gloss != null
+      ? {
+          background: `radial-gradient(circle at ${gloss.x}% ${gloss.y}%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, transparent 75%)`,
+          opacity: 1,
+        }
+      : { opacity: 0 };
+
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ perspective: "1000px" }}
+    >
+      <div
+        style={{
+          transform,
+          transition: "transform 0.1s ease-out",
+          transformStyle: "preserve-3d",
+          position: "relative",
+          display: "inline-block",
+        }}
+      >
+        {children}
+        <div
+          className={styles.idCardGloss}
+          style={glossStyle}
+          aria-hidden
+        />
+      </div>
+    </div>
   );
 }
 
@@ -415,36 +498,39 @@ function StudentIdCard({
             <div className={styles.idCardPhotoPlaceholder}>?</div>
           )}
         </div>
-        <div className={styles.idCardInfo}>
-          <div className={styles.idCardName}>{profile?.name ?? "—"}</div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.studentId")}</span>
-            <span className={styles.idCardValue}>{profile?.student_id ?? "—"}</span>
+        <div className={styles.idCardName}>{profile?.name ?? "—"}</div>
+        <div className={styles.idCardBottomRow}>
+          <div className={styles.idCardInfo}>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.studentId")}</span>
+              <span className={styles.idCardValue}>{profile?.student_id ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.major")}</span>
+              <span className={styles.idCardValue}>{profile?.major ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.deptName")}</span>
+              <span className={styles.idCardValue}>{profile?.dept_name ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.dateOfBirth")}</span>
+              <span className={styles.idCardValue}>{profile?.date_of_birth ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.gender")}</span>
+              <span className={styles.idCardValue}>{profile?.gender ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.nationality")}</span>
+              <span className={styles.idCardValue}>{profile?.nationality ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.roomNo")}</span>
+              <span className={styles.idCardValue}>{profile?.room_no ?? "—"}</span>
+            </div>
           </div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.major")}</span>
-            <span className={styles.idCardValue}>{profile?.major ?? "—"}</span>
-          </div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.deptName")}</span>
-            <span className={styles.idCardValue}>{profile?.dept_name ?? "—"}</span>
-          </div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.dateOfBirth")}</span>
-            <span className={styles.idCardValue}>{profile?.date_of_birth ?? "—"}</span>
-          </div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.gender")}</span>
-            <span className={styles.idCardValue}>{profile?.gender ?? "—"}</span>
-          </div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.nationality")}</span>
-            <span className={styles.idCardValue}>{profile?.nationality ?? "—"}</span>
-          </div>
-          <div className={styles.idCardRow}>
-            <span className={styles.idCardLabel}>{t(language, "profile.roomNo")}</span>
-            <span className={styles.idCardValue}>{profile?.room_no ?? "—"}</span>
-          </div>
+          <div className={styles.idCardBodyMascot} aria-hidden />
         </div>
       </div>
       <div className={styles.idCardFooter}>
