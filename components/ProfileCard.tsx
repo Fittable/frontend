@@ -520,6 +520,7 @@ function StudentIdCard({
   idCardRef?: React.RefObject<HTMLDivElement>;
 }) {
   const [photoError, setPhotoError] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(true);
   const initial = (profile?.name || profile?.student_id || "?").charAt(0).toUpperCase();
 
   return (
@@ -532,12 +533,16 @@ function StudentIdCard({
           {profile ? (photoError ? (
             <div className={styles.idCardPhotoPlaceholder}>{initial}</div>
           ) : (
-            <img
-              src="/api/profile/image"
-              alt=""
-              className={styles.idCardPhoto}
-              onError={() => setPhotoError(true)}
-            />
+            <>
+              <img
+                src="/api/profile/image"
+                alt=""
+                className={styles.idCardPhoto}
+                onLoad={() => setPhotoLoading(false)}
+                onError={() => { setPhotoError(true); setPhotoLoading(false); }}
+              />
+              {photoLoading && <div className={styles.idCardPhotoLoader} aria-hidden />}
+            </>
           )) : (
             <div className={styles.idCardPhotoPlaceholder}>?</div>
           )}
