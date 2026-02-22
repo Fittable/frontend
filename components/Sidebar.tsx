@@ -205,21 +205,6 @@ export default function Sidebar({
 
         {/* User Info */}
         <div className={styles.userSection}>
-          {/* Theme toggle */}
-          <div className={styles.themeRow}>
-            <span className={styles.themeLabel}>
-              {language === "ko" ? "테마" : "Theme"}
-            </span>
-            <button
-              type="button"
-              className={styles.themeToggle}
-              onClick={toggleTheme}
-              aria-label={theme === "dark" ? (language === "ko" ? "라이트 모드로 전환" : "Switch to light mode") : (language === "ko" ? "다크 모드로 전환" : "Switch to dark mode")}
-              title={theme === "dark" ? (language === "ko" ? "라이트 모드" : "Light mode") : (language === "ko" ? "다크 모드" : "Dark mode")}
-            >
-              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-            </button>
-          </div>
           {/* Download Buttons */}
           {(onDownloadSchedulePDF || onDownloadWorklog || onDownloadWorklogDocx) && (
             <div className={styles.downloadSection}>
@@ -301,15 +286,26 @@ export default function Sidebar({
               <div className={styles.userDetails}>
                 <div className={styles.userNameRow}>
                   <span className={styles.userName}>{getDisplayName(user, "fullName")}</span>
-                  <button
-                    type="button"
-                    className={styles.settingsButton}
-                    onClick={() => setShowProfileCard(true)}
-                    aria-label={t(language, "profile.settings")}
-                    title={t(language, "profile.settings")}
-                  >
-                    <SettingsIcon />
-                  </button>
+                  <div className={styles.userNameRowActions}>
+                    <button
+                      type="button"
+                      className={styles.settingsButton}
+                      onClick={() => setShowProfileCard(true)}
+                      aria-label={t(language, "profile.settings")}
+                      title={t(language, "profile.settings")}
+                    >
+                      <SettingsIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.themeToggle}
+                      onClick={toggleTheme}
+                      aria-label={theme === "dark" ? (language === "ko" ? "라이트 모드로 전환" : "Switch to light mode") : (language === "ko" ? "다크 모드로 전환" : "Switch to dark mode")}
+                      title={theme === "dark" ? (language === "ko" ? "라이트 모드" : "Light mode") : (language === "ko" ? "다크 모드" : "Dark mode")}
+                    >
+                      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+                    </button>
+                  </div>
                 </div>
                 <span className={styles.userRole}>{user.role}</span>
               </div>
