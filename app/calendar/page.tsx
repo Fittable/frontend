@@ -638,6 +638,7 @@ export default function CalendarPage() {
         displayNamePreference={displayNamePreference}
         onDisplayNamePreferenceChange={handleDisplayNamePreferenceChange}
         onProfileUpdated={handleProfileUpdated}
+        profile={profile}
         onDownloadSchedulePDF={handleDownloadSchedulePDF}
         onDownloadWorklog={handleDownloadWorklog}
         onDownloadWorklogDocx={handleDownloadWorklogDocx}

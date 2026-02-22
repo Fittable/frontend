@@ -81,7 +81,9 @@ export type TranslationKey =
   | "profile.save"
   | "profile.saving"
   | "profile.loading"
-  | "profile.close";
+  | "profile.close"
+  | "profile.viewProfile"
+  | "profile.studentIdCard";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   ko: {
@@ -171,6 +173,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.saving": "저장 중...",
     "profile.loading": "불러오는 중...",
     "profile.close": "닫기",
+    "profile.viewProfile": "프로필 보기",
+    "profile.studentIdCard": "근로학생증",
   },
   en: {
     // Common
@@ -259,6 +263,8 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.saving": "Saving...",
     "profile.loading": "Loading...",
     "profile.close": "Close",
+    "profile.viewProfile": "View profile",
+    "profile.studentIdCard": "Student ID Card",
   },
 };
 
