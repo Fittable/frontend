@@ -76,12 +76,14 @@ export type TranslationKey =
   | "profile.workCategory"
   | "profile.language"
   | "profile.displayNamePreference"
+  | "profile.displayName"
   | "profile.displayNickname"
   | "profile.displayFullName"
   | "profile.save"
   | "profile.saving"
   | "profile.loading"
   | "profile.close"
+  | "profile.download"
   | "profile.viewProfile"
   | "profile.studentIdCard";
 
@@ -167,12 +169,14 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.workCategory": "구분",
     "profile.language": "언어",
     "profile.displayNamePreference": "캘린더에 표시할 이름",
+    "profile.displayName": "이름",
     "profile.displayNickname": "닉네임",
     "profile.displayFullName": "이름",
     "profile.save": "저장",
     "profile.saving": "저장 중...",
     "profile.loading": "불러오는 중...",
     "profile.close": "닫기",
+    "profile.download": "다운로드",
     "profile.viewProfile": "프로필 보기",
     "profile.studentIdCard": "근로학생증",
   },
@@ -257,12 +261,14 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "profile.workCategory": "Category",
     "profile.language": "Language",
     "profile.displayNamePreference": "Name to display in calendar",
+    "profile.displayName": "Display name",
     "profile.displayNickname": "Nickname",
     "profile.displayFullName": "Full name",
     "profile.save": "Save",
     "profile.saving": "Saving...",
     "profile.loading": "Loading...",
     "profile.close": "Close",
+    "profile.download": "Download",
     "profile.viewProfile": "View profile",
     "profile.studentIdCard": "Student ID Card",
   },

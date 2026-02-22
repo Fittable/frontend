@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import html2canvas from "html2canvas";
 import { api } from "@/lib/api";
 import { ProfileSettings, ProfileSettingsUpdate, DisplayNamePreference } from "@/lib/types";
 import { t, Language } from "@/lib/i18n";
@@ -59,6 +60,7 @@ export default function ProfileCard({
   const [showFullProfile, setShowFullProfile] = useState(false);
   const [loadingFullProfile, setLoadingFullProfile] = useState(false);
   const [showIdCardPopup, setShowIdCardPopup] = useState(false);
+  const idCardRef = useRef<HTMLDivElement>(null);
 
   const [roomNo, setRoomNo] = useState(initialSettings?.room_no ?? "");
   const [nickname, setNickname] = useState(initialSettings?.nickname ?? "");
@@ -157,6 +159,33 @@ export default function ProfileCard({
     if (e.target === e.currentTarget) onClose();
   };
 
+  const handleDownloadIdCard = useCallback(async () => {
+    const el = idCardRef.current;
+    if (!el) return;
+    const safeName = (profile?.name ?? "student").replace(/[/\\:*?"<>|]/g, "").trim() || "student";
+    const filename = `${safeName} 근로학생증.png`;
+    try {
+      const scale = Math.min(4, Math.max(3, typeof window !== "undefined" ? window.devicePixelRatio || 2 : 3));
+      const canvas = await html2canvas(el, {
+        scale,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null,
+      });
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    } catch {
+      // ignore capture errors
+    }
+  }, [profile?.name]);
+
   const showSettingsOnly = initialSettings != null && !showFullProfile;
 
   if (loading) {
@@ -218,7 +247,7 @@ export default function ProfileCard({
               </div>
               <div className={styles.nameBlock}>
                 <div className={styles.row} style={{ flex: 1, marginBottom: 0 }}>
-                  <span className={styles.label}>{t(language, "profile.name")}</span>
+                  <span className={styles.label}>{t(language, "profile.displayName")}</span>
                   <span className={styles.value}>{userDisplayName ?? "—"}</span>
                 </div>
                 <button
@@ -257,6 +286,22 @@ export default function ProfileCard({
           {showSettingsOnly && error && <div className={styles.error} style={{ marginTop: 12 }}>{error}</div>}
 
           <div className={styles.row}>
+            <span className={styles.label}>{t(language, "profile.deptName")}</span>
+            <select
+              className={styles.select}
+              value={deptName}
+              onChange={(e) => setDeptName(e.target.value)}
+              aria-label={t(language, "profile.deptName")}
+            >
+              <option value="">—</option>
+              {DEPT_NAME_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.row}>
             <span className={styles.label}>{t(language, "profile.roomNo")}</span>
             <select
               className={styles.select}
@@ -279,67 +324,54 @@ export default function ProfileCard({
               className={styles.input}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder={t(language, "profile.nickname")}
+              placeholder={profile?.name?.charAt(0) || userDisplayName?.charAt(0) || t(language, "profile.nickname")}
             />
           </div>
-          <div className={styles.row}>
-            <span className={styles.label}>{t(language, "profile.deptName")}</span>
-            <select
-              className={styles.select}
-              value={deptName}
-              onChange={(e) => setDeptName(e.target.value)}
-              aria-label={t(language, "profile.deptName")}
-            >
-              <option value="">—</option>
-              {DEPT_NAME_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          {onLanguageChange && (
-            <div className={styles.row}>
-              <span className={styles.label}>{t(language, "profile.language")}</span>
-              <div className={styles.langToggle} aria-label="Language">
-                <button
-                  type="button"
-                  className={`${styles.langButton} ${language === "ko" ? styles.langButtonActive : ""}`}
-                  onClick={() => onLanguageChange("ko")}
-                >
-                  한
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.langButton} ${language === "en" ? styles.langButtonActive : ""}`}
-                  onClick={() => onLanguageChange("en")}
-                >
-                  En
-                </button>
-              </div>
-            </div>
-          )}
-
-          {onDisplayNamePreferenceChange && (
-            <div className={styles.row}>
-              <span className={styles.label}>{t(language, "profile.displayNamePreference")}</span>
-              <div className={styles.langToggle} aria-label="Display name preference">
-                <button
-                  type="button"
-                  className={`${styles.langButton} ${displayNamePreference === "nickname" ? styles.langButtonActive : ""}`}
-                  onClick={() => onDisplayNamePreferenceChange("nickname")}
-                >
-                  {t(language, "profile.displayNickname")}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.langButton} ${displayNamePreference === "fullName" ? styles.langButtonActive : ""}`}
-                  onClick={() => onDisplayNamePreferenceChange("fullName")}
-                >
-                  {t(language, "profile.displayFullName")}
-                </button>
-              </div>
+          {(onLanguageChange || onDisplayNamePreferenceChange) && (
+            <div className={styles.togglesRow}>
+              {onLanguageChange && (
+                <div className={styles.row}>
+                  <span className={styles.label}>{t(language, "profile.language")}</span>
+                  <div className={styles.langToggle} aria-label="Language">
+                    <button
+                      type="button"
+                      className={`${styles.langButton} ${language === "ko" ? styles.langButtonActive : ""}`}
+                      onClick={() => onLanguageChange("ko")}
+                    >
+                      한
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.langButton} ${language === "en" ? styles.langButtonActive : ""}`}
+                      onClick={() => onLanguageChange("en")}
+                    >
+                      En
+                    </button>
+                  </div>
+                </div>
+              )}
+              {onDisplayNamePreferenceChange && (
+                <div className={styles.row}>
+                  <span className={styles.label}>{t(language, "profile.displayNamePreference")}</span>
+                  <div className={styles.langToggle} aria-label="Display name preference">
+                    <button
+                      type="button"
+                      className={`${styles.langButton} ${displayNamePreference === "nickname" ? styles.langButtonActive : ""}`}
+                      onClick={() => onDisplayNamePreferenceChange("nickname")}
+                    >
+                      {t(language, "profile.displayNickname")}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.langButton} ${displayNamePreference === "fullName" ? styles.langButtonActive : ""}`}
+                      onClick={() => onDisplayNamePreferenceChange("fullName")}
+                    >
+                      {t(language, "profile.displayFullName")}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -369,16 +401,26 @@ export default function ProfileCard({
             aria-hidden
           />
           <div className={styles.idCardPopupCard} role="dialog" aria-label={t(language, "profile.studentIdCard")}>
-            <button
-              type="button"
-              className={styles.idCardPopupClose}
-              onClick={() => setShowIdCardPopup(false)}
-              aria-label={t(language, "profile.close")}
-            >
-              <CloseIcon />
-            </button>
+            <div className={styles.idCardPopupActions}>
+              <button
+                type="button"
+                className={styles.idCardPopupDownload}
+                onClick={handleDownloadIdCard}
+                aria-label={t(language, "profile.download")}
+              >
+                <DownloadIcon />
+              </button>
+              <button
+                type="button"
+                className={styles.idCardPopupClose}
+                onClick={() => setShowIdCardPopup(false)}
+                aria-label={t(language, "profile.close")}
+              >
+                <CloseIcon />
+              </button>
+            </div>
             <TiltedCard className={styles.idCardTiltWrap}>
-              <StudentIdCard profile={profile} language={language} />
+              <StudentIdCard profile={profile} language={language} idCardRef={idCardRef} />
             </TiltedCard>
           </div>
         </>
@@ -471,15 +513,17 @@ function TiltedCard({
 function StudentIdCard({
   profile,
   language,
+  idCardRef,
 }: {
   profile: ProfileSettings | null;
   language: Language;
+  idCardRef?: React.RefObject<HTMLDivElement>;
 }) {
   const [photoError, setPhotoError] = useState(false);
   const initial = (profile?.name || profile?.student_id || "?").charAt(0).toUpperCase();
 
   return (
-    <div className={styles.idCard}>
+    <div ref={idCardRef} className={styles.idCard}>
       <div className={styles.idCardStripe}>
         <span className={styles.idCardStripeText}>{t(language, "profile.studentIdCard")}</span>
       </div>
@@ -506,12 +550,12 @@ function StudentIdCard({
               <span className={styles.idCardValue}>{profile?.student_id ?? "—"}</span>
             </div>
             <div className={styles.idCardRow}>
-              <span className={styles.idCardLabel}>{t(language, "profile.major")}</span>
-              <span className={styles.idCardValue}>{profile?.major ?? "—"}</span>
-            </div>
-            <div className={styles.idCardRow}>
               <span className={styles.idCardLabel}>{t(language, "profile.deptName")}</span>
               <span className={styles.idCardValue}>{profile?.dept_name ?? "—"}</span>
+            </div>
+            <div className={styles.idCardRow}>
+              <span className={styles.idCardLabel}>{t(language, "profile.major")}</span>
+              <span className={styles.idCardValue}>{profile?.major ?? "—"}</span>
             </div>
             <div className={styles.idCardRow}>
               <span className={styles.idCardLabel}>{t(language, "profile.dateOfBirth")}</span>
@@ -537,6 +581,16 @@ function StudentIdCard({
         <span className={styles.idCardIdDisplay}>{profile?.student_id ?? ""}</span>
       </div>
     </div>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
   );
 }
 
