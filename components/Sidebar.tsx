@@ -44,6 +44,8 @@ interface SidebarProps {
   displayNamePreference?: DisplayNamePreference;
   onDisplayNamePreferenceChange?: (pref: DisplayNamePreference) => void;
   onProfileUpdated?: (profile: ProfileSettings) => void;
+  /** Cached profile for settings modal; when provided, settings open without an API call. */
+  profile?: ProfileSettings | null;
   onDownloadSchedulePDF?: () => void;
   onDownloadWorklog?: () => void;
   onDownloadWorklogDocx?: () => void;
@@ -67,6 +69,7 @@ export default function Sidebar({
   displayNamePreference = "nickname",
   onDisplayNamePreferenceChange,
   onProfileUpdated,
+  profile: profileProp,
   onDownloadSchedulePDF,
   onDownloadWorklog,
   onDownloadWorklogDocx,
@@ -75,7 +78,6 @@ export default function Sidebar({
   const { theme, toggleTheme } = useTheme();
   const showAllSelected = visibleWorkerIds.length === 0;
   const [userHours, setUserHours] = useState<Record<string, number>>({});
-  const [profileImageError, setProfileImageError] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [workLogMenuOpen, setWorkLogMenuOpen] = useState(false);
   const workLogDropdownRef = useRef<HTMLDivElement>(null);
@@ -290,14 +292,11 @@ export default function Sidebar({
                 <span className={styles.userAvatarLetter}>
                   {getDisplayName(user, "fullName").charAt(0).toUpperCase()}
                 </span>
-                {!profileImageError && (
-                  <img
-                    src="/api/profile/image"
-                    alt=""
-                    className={styles.userAvatarImage}
-                    onError={() => setProfileImageError(true)}
-                  />
-                )}
+                <img
+                  src="/default-avatar.png"
+                  alt=""
+                  className={styles.userAvatarImage}
+                />
               </div>
               <div className={styles.userDetails}>
                 <div className={styles.userNameRow}>
@@ -331,6 +330,9 @@ export default function Sidebar({
           displayNamePreference={displayNamePreference}
           onDisplayNamePreferenceChange={onDisplayNamePreferenceChange}
           onProfileUpdated={onProfileUpdated}
+          initialSettings={profileProp ?? undefined}
+          userDisplayName={getDisplayName(user, displayNamePreference)}
+          userInitial={(user.name || user.student_id || "?").charAt(0)}
         />
       )}
     </>

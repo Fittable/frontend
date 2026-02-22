@@ -65,12 +65,44 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.nameBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.viewProfileBtnInline {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.viewProfileBtnInline:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.viewProfileBtnInline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .avatar {
+  position: relative;
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: var(--accent);
-  color: white;
+  background: transparent;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,10 +112,18 @@
   flex-shrink: 0;
 }
 
+.avatarLetter {
+  position: relative;
+  z-index: 0;
+}
+
 .avatarImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 1;
 }
 
 .row {
@@ -219,6 +259,189 @@
 .cancelBtn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.viewProfileBtn {
+  width: 100%;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.viewProfileBtn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.viewProfileBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ID card popup (in front when "View profile" is clicked) */
+.idCardPopupOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 202;
+  animation: fadeIn 0.15s ease;
+}
+
+.idCardPopupCard {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 203;
+  padding: 40px 40px 12px 12px;
+  animation: scaleIn 0.2s ease;
+}
+
+.idCardPopupClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background var(--transition-fast), color var(--transition-fast);
+  z-index: 1;
+}
+
+.idCardPopupClose:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Student ID card – larger portrait size, no scroll */
+.idCard {
+  width: 300px;
+  min-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: var(--bg-card);
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.idCardStripe {
+  background: linear-gradient(135deg, #4F0028 0%, #6b0036 100%);
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.idCardStripeText {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.idCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+/* Photo: passport ratio 35:45 */
+.idCardPhotoWrap {
+  width: 84px;
+  height: 108px;
+  margin: 10px auto 8px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.idCardPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.idCardPhotoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4F0028;
+  color: white;
+  font-weight: 700;
+  font-size: 36px;
+}
+
+.idCardInfo {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.idCardName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.idCardRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.3;
+}
+
+.idCardLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  color: var(--text-muted);
+}
+
+.idCardValue {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.idCardFooter {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.idCardIdDisplay {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
 }
 
 .loading,
