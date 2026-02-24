@@ -227,15 +227,15 @@ export default function CalendarPage() {
     }
   }, [user, loadShifts, loadHolidays, loadTimetable]);
 
-  // Poll shifts so other users' changes appear without refresh
+  // Poll shifts so other users' changes appear without refresh (pause while modal is open to avoid losing form data)
   useEffect(() => {
-    if (!user) return;
+    if (!user || showModal) return;
     const intervalMs = 30_000; // 30 seconds
     const interval = setInterval(() => {
       loadShifts();
     }, intervalMs);
     return () => clearInterval(interval);
-  }, [user, loadShifts]);
+  }, [user, loadShifts, showModal]);
 
   // Detect mobile screen size
   useEffect(() => {
