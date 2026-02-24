@@ -26,6 +26,54 @@ interface ShiftEditorModalProps {
   onDelete?: (shiftId: string, skipConfirmation?: boolean) => void;
 }
 
+// Break time (12:00–13:00) is always excluded when using direct input
+const BREAK_START = "12:00";
+const BREAK_END = "13:00";
+
+/** Parse "HH:MM" to minutes since midnight for comparison */
+function toMinutes(hhmm: string): number {
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
+/**
+ * Split a custom time range into morning/afternoon segments, excluding 12:00–13:00 break.
+ * e.g. 09:00–17:00 → [09:00–12:00, 13:00–17:00]; 09:00–11:00 → [09:00–11:00].
+ */
+function splitCustomTimeAcrossBreak(
+  start: string,
+  end: string
+): { start: string; end: string }[] {
+  const s = start.slice(0, 5);
+  const e = end.slice(0, 5);
+  const startMin = toMinutes(s);
+  const endMin = toMinutes(e);
+  const breakStartMin = toMinutes(BREAK_START);
+  const breakEndMin = toMinutes(BREAK_END);
+
+  const segments: { start: string; end: string }[] = [];
+
+  // Range entirely within break (12:00–13:00): no work time
+  if (startMin >= breakStartMin && endMin <= breakEndMin) {
+    return [];
+  }
+
+  // Morning: from start up to 12:00 (only if range begins before 12:00 and has time before break)
+  if (startMin < breakStartMin && endMin > breakStartMin) {
+    segments.push({ start: s, end: BREAK_START });
+  }
+  // Afternoon: from 13:00 to end (only if range ends after 13:00 and has time after break)
+  if (startMin < breakEndMin && endMin > breakEndMin) {
+    segments.push({ start: BREAK_END, end: e });
+  }
+  // No split: range is entirely before 12:00, entirely after 13:00
+  if (segments.length === 0) {
+    segments.push({ start: s, end: e });
+  }
+
+  return segments;
+}
+
 // Time presets
 const PRESETS = {
   normal: {
@@ -299,6 +347,15 @@ export default function ShiftEditorModal({
       return;
     }
 
+    // When custom is selected, range must not be entirely within break (12:00–13:00)
+    if (customSelected) {
+      const customSegments = splitCustomTimeAcrossBreak(customStart, customEnd);
+      if (customSegments.length === 0) {
+        setError(t(language, "shifts.errorBreakTimeOnly"));
+        return;
+      }
+    }
+
     // Validate that at least one day is available when creating new shift
     if (!shift && allSelectedDates.length === 0 && !date) {
       setError(t(language, "shifts.errorNoDaySelected"));
@@ -334,7 +391,12 @@ export default function ShiftEditorModal({
         const desired: DesiredBlock[] = [];
         if (morningSelected) desired.push({ type: "morning", start: times.morning.start, end: times.morning.end });
         if (eveningSelected) desired.push({ type: "evening", start: times.evening.start, end: times.evening.end });
-        if (customSelected) desired.push({ type: "custom", start: customStart, end: customEnd });
+        if (customSelected) {
+          const customSegments = splitCustomTimeAcrossBreak(customStart, customEnd);
+          for (const seg of customSegments) {
+            desired.push({ type: "custom", start: seg.start, end: seg.end });
+          }
+        }
 
         const assignable = [...sameUserOnDate];
         const assigned = new Set<string>();
@@ -397,12 +459,15 @@ export default function ShiftEditorModal({
             });
           }
           if (customSelected) {
-            await api.createShift({
-              date: targetDate,
-              start_time: toTime(customStart),
-              end_time: toTime(customEnd),
-              user_id: isAdmin ? userId : undefined,
-            });
+            const customSegments = splitCustomTimeAcrossBreak(customStart, customEnd);
+            for (const seg of customSegments) {
+              await api.createShift({
+                date: targetDate,
+                start_time: toTime(seg.start),
+                end_time: toTime(seg.end),
+                user_id: isAdmin ? userId : undefined,
+              });
+            }
           }
         }
       }
@@ -453,8 +518,9 @@ export default function ShiftEditorModal({
 
   const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
 
-  // Count how many shifts will be created
-  const timeOptionCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + (customSelected ? 1 : 0);
+  // Count how many shifts will be created (custom can yield multiple segments across break)
+  const customSegmentCount = customSelected ? splitCustomTimeAcrossBreak(customStart, customEnd).length : 0;
+  const timeOptionCount = (morningSelected ? 1 : 0) + (eveningSelected ? 1 : 0) + customSegmentCount;
   const dayCount = shift ? 1 : (allSelectedDates.length > 0 ? allSelectedDates.length : 1);
   const shiftCount = timeOptionCount * dayCount;
   const isFullDay = morningSelected && eveningSelected && !customSelected;
@@ -469,7 +535,10 @@ export default function ShiftEditorModal({
       parts.push(`${times.evening.start}–${times.evening.end}`);
     }
     if (customSelected) {
-      parts.push(`${customStart}–${customEnd}`);
+      const customSegments = splitCustomTimeAcrossBreak(customStart, customEnd);
+      for (const seg of customSegments) {
+        parts.push(`${seg.start}–${seg.end}`);
+      }
     }
     return parts.join(", ");
   };

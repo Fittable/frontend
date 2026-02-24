@@ -47,6 +47,7 @@ export type TranslationKey =
   | "shifts.selectDays"
   | "shifts.daysSelected"
   | "shifts.errorNoDaySelected"
+  | "shifts.errorBreakTimeOnly"
   | "shifts.selectedDates"
   | "shifts.delete"
   | "shifts.deleting"
@@ -138,6 +139,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.selectDays": "날짜 선택",
     "shifts.daysSelected": "일",
     "shifts.errorNoDaySelected": "최소 하나의 날짜를 선택해주세요",
+    "shifts.errorBreakTimeOnly": "점심 시간(12:00–13:00)은 근무 시간으로 선택할 수 없습니다",
     "shifts.selectedDates": "선택된 날짜",
     "shifts.delete": "삭제",
     "shifts.deleting": "삭제 중...",
@@ -230,6 +232,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "shifts.selectDays": "Select Days",
     "shifts.daysSelected": "days",
     "shifts.errorNoDaySelected": "Please select at least one day",
+    "shifts.errorBreakTimeOnly": "Break time (12:00–13:00) cannot be selected as work time",
     "shifts.selectedDates": "Selected Dates",
     "shifts.delete": "Delete",
     "shifts.deleting": "Deleting...",
