@@ -30,6 +30,28 @@ interface ShiftEditorModalProps {
 const BREAK_START = "12:00";
 const BREAK_END = "13:00";
 
+// Direct-input time picker: hours 9 AM–5 PM (24h: 09–17), minutes 00, 15, 30, 45 only; end max 5:30 PM
+const ALLOWED_HOURS = ["09", "10", "11", "12", "13", "14", "15", "16", "17"];
+const ALLOWED_MINUTES = ["00", "15", "30", "45"];
+const END_MINUTES_WHEN_17 = ["00", "15", "30"]; // 5:30 PM max
+
+/** Snap HH:MM to nearest allowed minute (00, 15, 30, 45); keep hour in 9–17. End time capped at 17:30 */
+function snapToAllowedTime(hhmm: string, isEnd = false): string {
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  let hour = Math.max(9, Math.min(17, h ?? 9));
+  let min = m ?? 0;
+  let snappedMin = Math.round(min / 15) * 15;
+  if (snappedMin === 60) {
+    hour = Math.min(17, hour + 1);
+    snappedMin = 0;
+  }
+  snappedMin = Math.min(45, snappedMin);
+  if (isEnd && hour === 17 && snappedMin > 30) snappedMin = 30;
+  const hourStr = String(hour).padStart(2, "0");
+  const minuteStr = String(snappedMin).padStart(2, "0");
+  return `${hourStr}:${minuteStr}`;
+}
+
 /** Parse "HH:MM" to minutes since midnight for comparison */
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
@@ -249,8 +271,8 @@ export default function ShiftEditorModal({
 
       const customEntry = detectedList.find((d) => d.type === "custom");
       if (customEntry && customEntry.type === "custom") {
-        setCustomStart(customEntry.start ?? "13:00");
-        setCustomEnd(customEntry.end ?? "14:45");
+        setCustomStart(snapToAllowedTime(customEntry.start ?? "13:00"));
+        setCustomEnd(snapToAllowedTime(customEntry.end ?? "14:45", true));
       }
 
       setUserId(shift.user_id);
@@ -365,6 +387,8 @@ export default function ShiftEditorModal({
     setLoading(true);
 
     const times = vacationMode ? PRESETS.vacation : PRESETS.normal;
+    const snappedCustomStart = customSelected ? snapToAllowedTime(customStart) : "";
+    const snappedCustomEnd = customSelected ? snapToAllowedTime(customEnd, true) : "";
 
     try {
       if (shift) {
@@ -392,7 +416,7 @@ export default function ShiftEditorModal({
         if (morningSelected) desired.push({ type: "morning", start: times.morning.start, end: times.morning.end });
         if (eveningSelected) desired.push({ type: "evening", start: times.evening.start, end: times.evening.end });
         if (customSelected) {
-          const customSegments = splitCustomTimeAcrossBreak(customStart, customEnd);
+          const customSegments = splitCustomTimeAcrossBreak(snappedCustomStart, snappedCustomEnd);
           for (const seg of customSegments) {
             desired.push({ type: "custom", start: seg.start, end: seg.end });
           }
@@ -459,7 +483,7 @@ export default function ShiftEditorModal({
             });
           }
           if (customSelected) {
-            const customSegments = splitCustomTimeAcrossBreak(customStart, customEnd);
+            const customSegments = splitCustomTimeAcrossBreak(snappedCustomStart, snappedCustomEnd);
             for (const seg of customSegments) {
               await api.createShift({
                 date: targetDate,
@@ -710,26 +734,80 @@ export default function ShiftEditorModal({
             </div>
           </div>
 
-          {/* Custom Time inputs - show when custom is selected */}
+          {/* Custom Time inputs - show when custom is selected (hours 9–17, minutes 00/15/30/45 only) */}
           {customSelected && (
             <div className={styles.field}>
               <label className={styles.label}>{t(language, "shifts.customTime")}</label>
               <div className={styles.timeRow}>
-                <input
-                  type="time"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className={styles.input}
-                  required
-                />
+                <div className={styles.timeSelectGroup}>
+                  <select
+                    className={styles.select}
+                    value={customStart.slice(0, 2)}
+                    onChange={(e) => {
+                      const h = e.target.value;
+                      const m = customStart.slice(3, 5);
+                      setCustomStart(`${h}:${m}`);
+                    }}
+                    aria-label="Start hour"
+                  >
+                    {ALLOWED_HOURS.map((hour) => (
+                      <option key={hour} value={hour}>{hour}</option>
+                    ))}
+                  </select>
+                  <span className={styles.timeColon}>:</span>
+                  <select
+                    className={styles.select}
+                    value={customStart.slice(3, 5)}
+                    onChange={(e) => {
+                      const h = customStart.slice(0, 2);
+                      const m = e.target.value;
+                      setCustomStart(`${h}:${m}`);
+                    }}
+                    aria-label="Start minute"
+                  >
+                    {ALLOWED_MINUTES.map((min) => (
+                      <option key={min} value={min}>{min}</option>
+                    ))}
+                  </select>
+                </div>
                 <span className={styles.timeSeparator}>{t(language, "shifts.to")}</span>
-                <input
-                  type="time"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className={styles.input}
-                  required
-                />
+                <div className={styles.timeSelectGroup}>
+                  <select
+                    className={styles.select}
+                    value={customEnd.slice(0, 2)}
+                    onChange={(e) => {
+                      const h = e.target.value;
+                      const endMins = h === "17" ? END_MINUTES_WHEN_17 : ALLOWED_MINUTES;
+                      const curM = customEnd.slice(3, 5);
+                      const m = endMins.includes(curM) ? curM : endMins[endMins.length - 1];
+                      setCustomEnd(`${h}:${m}`);
+                    }}
+                    aria-label="End hour"
+                  >
+                    {ALLOWED_HOURS.map((hour) => (
+                      <option key={hour} value={hour}>{hour}</option>
+                    ))}
+                  </select>
+                  <span className={styles.timeColon}>:</span>
+                  <select
+                    className={styles.select}
+                    value={
+                      customEnd.slice(0, 2) === "17" && !END_MINUTES_WHEN_17.includes(customEnd.slice(3, 5))
+                        ? "30"
+                        : customEnd.slice(3, 5)
+                    }
+                    onChange={(e) => {
+                      const h = customEnd.slice(0, 2);
+                      const m = e.target.value;
+                      setCustomEnd(`${h}:${m}`);
+                    }}
+                    aria-label="End minute"
+                  >
+                    {(customEnd.slice(0, 2) === "17" ? END_MINUTES_WHEN_17 : ALLOWED_MINUTES).map((min) => (
+                      <option key={min} value={min}>{min}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           )}

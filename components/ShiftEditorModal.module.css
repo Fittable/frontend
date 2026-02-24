@@ -255,6 +255,23 @@
   font-size: 13px;
 }
 
+.timeSelectGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.timeSelectGroup .select {
+  min-width: 56px;
+  padding: 8px 6px;
+}
+
+.timeColon {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
 /* Summary */
 .summary {
   display: flex;
