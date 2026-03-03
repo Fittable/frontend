@@ -106,7 +106,7 @@ export default function Sidebar({
         const hoursByUser: Record<string, number> = {};
         
         for (const userSummary of data.users) {
-          hoursByUser[userSummary.user_id] = Math.round(userSummary.monthly_total * 10) / 10;
+          hoursByUser[userSummary.user_id] = userSummary.monthly_total;
         }
 
         setUserHours(hoursByUser);
@@ -188,7 +188,7 @@ export default function Sidebar({
                     <span className={styles.filterDot} style={{ background: color }} />
                     <span className={styles.filterLabel}>{getDisplayName(w, displayNamePreference)}</span>
                     {hours !== undefined && hours > 0 && (
-                      <span className={styles.hoursLabel}>{hours}h</span>
+                      <span className={styles.hoursLabel}>{hours.toFixed(2)}h</span>
                     )}
                     {w.role === "admin" && (
                       <span className={styles.adminBadge}>{t(language, "common.admin")}</span>
