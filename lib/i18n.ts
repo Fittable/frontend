@@ -146,7 +146,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
 
     // Login
     "login.title": "핏테이블",
-    "login.subtitle": "국제교류팀 근로학생을 위한 시간 관리 플렛폼",
+    "login.subtitle": "광운대학교 국제교류팀 근로학생을 위한 시간 관리 플렛폼",
     "login.studentIdLabel": "학번",
     "login.studentIdPlaceholder": "학번을 입력하세요",
     "login.passwordLabel": "비밀번호",
