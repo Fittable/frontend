@@ -121,13 +121,24 @@ function LoginForm() {
         </form>
 
         <div className={styles.madeBy}>
-          <span>made with love by Universe ^^ </span>
+          <span>
+            Enjoying Fittable?&nbsp;
+            <a 
+              href="https://buymeacoffee.com/univerxe" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              title="Buy me a coffee"
+              style={{ textDecoration: "underline", color: "inherit" }}
+            >
+              support the developer ☕
+            </a>
+          </span>
         </div>
       </div>
 
       {/* Footer */}
       <footer className={styles.footer}>
-        <span>Fittable</span>
+        <span>{"\u00A9 2026 Fittable"}</span>
       </footer>
     </div>
   );
