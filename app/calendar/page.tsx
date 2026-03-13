@@ -90,6 +90,7 @@ export default function CalendarPage() {
   const [timetable, setTimetable] = useState<TimetableResponse | null>(null);
   const [profile, setProfile] = useState<ProfileSettings | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [scheduleHighlight, setScheduleHighlight] = useState<"all" | "102" | "103" | "none">("all");
   const [displayNamePreference, setDisplayNamePreference] = useState<DisplayNamePreference>(
     () => getInitialDisplayNamePreference()
   );
@@ -400,16 +401,17 @@ export default function CalendarPage() {
     }
   };
 
-  const handleDownloadSchedulePDF = async () => {
+  const handleDownloadSchedulePDF = async (highlight?: "all" | "102" | "103" | "none") => {
     if (!user) return;
+
+    const effectiveHighlight = highlight ?? scheduleHighlight;
+    if (highlight) setScheduleHighlight(highlight);
 
     const month = `${workMonth.startYear}-${String(workMonth.startMonth + 1).padStart(2, "0")}`;
     
-    // Calculate work month dates: 25th of start month to 24th of end month
     const startDate = new Date(workMonth.startYear, workMonth.startMonth, 25);
     const endDate = new Date(workMonth.endYear, workMonth.endMonth, 24);
     
-    // Format dates as YYYY-MM-DD
     const formatDate = (date: Date): string => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -420,12 +422,11 @@ export default function CalendarPage() {
     const startDateStr = formatDate(startDate);
     const endDateStr = formatDate(endDate);
     
-    // Create filename: "알바 시간표 (2026-01-25 ~ 2026-02-24).pdf"
     const filename = `알바 시간표 (${startDateStr} ~ ${endDateStr}).pdf`;
 
     setDownloadingPdf(true);
     try {
-      await api.downloadSchedulePDF(month, undefined, undefined, filename);
+      await api.downloadSchedulePDF(month, undefined, undefined, filename, effectiveHighlight);
     } catch (err) {
       console.error("Failed to download schedule PDF:", err);
       const errorMessage = language === "ko" 
@@ -640,6 +641,8 @@ export default function CalendarPage() {
         onProfileUpdated={handleProfileUpdated}
         profile={profile}
         onDownloadSchedulePDF={handleDownloadSchedulePDF}
+        scheduleHighlight={scheduleHighlight}
+        onScheduleHighlightChange={setScheduleHighlight}
         onDownloadWorklog={handleDownloadWorklog}
         onDownloadWorklogDocx={handleDownloadWorklogDocx}
         downloadDisabled={downloadingPdf}
