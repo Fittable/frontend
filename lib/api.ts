@@ -155,7 +155,8 @@ export const api = {
     month?: string, 
     startDate?: string, 
     endDate?: string,
-    filenameOverride?: string
+    filenameOverride?: string,
+    highlight?: "all" | "102" | "103" | "none"
   ): Promise<void> => {
     const params = new URLSearchParams();
     if (startDate && endDate) {
@@ -165,6 +166,9 @@ export const api = {
       params.append("month", month);
     } else {
       throw new Error("Either month or start_date+end_date required");
+    }
+    if (highlight && highlight !== "all") {
+      params.append("highlight", highlight);
     }
 
     const res = await fetch(`${API_BASE}/shifts/schedule/pdf?${params}`, {
@@ -198,6 +202,8 @@ export const api = {
     const link = document.createElement("a");
     link.href = url;
     link.download = filename;
+    link.style.cssText =
+      "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -242,6 +248,8 @@ export const api = {
     const link = document.createElement("a");
     link.href = url;
     link.download = filename;
+    link.style.cssText =
+      "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

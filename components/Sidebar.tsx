@@ -46,7 +46,9 @@ interface SidebarProps {
   onProfileUpdated?: (profile: ProfileSettings) => void;
   /** Cached profile for settings modal; when provided, settings open without an API call. */
   profile?: ProfileSettings | null;
-  onDownloadSchedulePDF?: () => void;
+  onDownloadSchedulePDF?: (highlight?: "all" | "102" | "103" | "none") => void;
+  scheduleHighlight?: "all" | "102" | "103" | "none";
+  onScheduleHighlightChange?: (value: "all" | "102" | "103" | "none") => void;
   onDownloadWorklog?: () => void;
   onDownloadWorklogDocx?: () => void;
   downloadDisabled?: boolean;
@@ -71,6 +73,8 @@ export default function Sidebar({
   onProfileUpdated,
   profile: profileProp,
   onDownloadSchedulePDF,
+  scheduleHighlight = "all",
+  onScheduleHighlightChange,
   onDownloadWorklog,
   onDownloadWorklogDocx,
   downloadDisabled,
@@ -81,18 +85,23 @@ export default function Sidebar({
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [workLogMenuOpen, setWorkLogMenuOpen] = useState(false);
   const workLogDropdownRef = useRef<HTMLDivElement>(null);
+  const [scheduleMenuOpen, setScheduleMenuOpen] = useState(false);
+  const scheduleDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close work log dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
-    if (!workLogMenuOpen) return;
+    if (!workLogMenuOpen && !scheduleMenuOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (workLogDropdownRef.current && !workLogDropdownRef.current.contains(e.target as Node)) {
+      if (workLogMenuOpen && workLogDropdownRef.current && !workLogDropdownRef.current.contains(e.target as Node)) {
         setWorkLogMenuOpen(false);
+      }
+      if (scheduleMenuOpen && scheduleDropdownRef.current && !scheduleDropdownRef.current.contains(e.target as Node)) {
+        setScheduleMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [workLogMenuOpen]);
+  }, [workLogMenuOpen, scheduleMenuOpen]);
 
   // Fetch hours for the current work month (25th to 24th)
   // Re-fetch when shifts change (after create/update/delete); depend on shifts so edits (same length) also trigger refetch
@@ -141,7 +150,9 @@ export default function Sidebar({
       {/* Mobile overlay */}
       {isOpen && <div className={styles.overlay} onClick={onClose} />}
 
-      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
+      <aside
+        className={`${styles.sidebar} ${isOpen ? styles.open : ""} ${scheduleMenuOpen || workLogMenuOpen ? styles.dropdownOpen : ""}`}
+      >
         {/* Mini Calendar */}
         <div className={styles.section}>
           <MiniCalendar
@@ -209,15 +220,55 @@ export default function Sidebar({
           {(onDownloadSchedulePDF || onDownloadWorklog || onDownloadWorklogDocx) && (
             <div className={styles.downloadSection}>
               {onDownloadSchedulePDF && (
-                <button
-                  type="button"
-                  className={styles.downloadButton}
-                  onClick={onDownloadSchedulePDF}
-                  disabled={downloadDisabled}
+                <div
+                  ref={scheduleDropdownRef}
+                  className={styles.workLogDropdownWrap}
                 >
-                  <DownloadIcon />
-                  <span>{language === "ko" ? "시간표" : "Schedule"}</span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.downloadButton}
+                    disabled={downloadDisabled}
+                    aria-haspopup="true"
+                    aria-expanded={scheduleMenuOpen}
+                    onClick={() => setScheduleMenuOpen((open) => !open)}
+                  >
+                    <DownloadIcon />
+                    <span>{language === "ko" ? "시간표" : "Schedule"}</span>
+                  </button>
+                  {scheduleMenuOpen && (
+                    <div className={styles.workLogDropdown} role="menu">
+                      {([
+                        { value: "all" as const, label: language === "ko" ? "전체" : "All" },
+                        { value: "102" as const, label: "102호", color: "#f472b6" },
+                        { value: "103" as const, label: "103호", color: "#4ade80" },
+                        { value: "none" as const, label: language === "ko" ? "없음" : "None" },
+                      ]).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          role="menuitem"
+                          className={`${styles.workLogDropdownItem} ${scheduleHighlight === opt.value ? styles.workLogDropdownItemActive : ""}`}
+                          onClick={() => {
+                            if (onScheduleHighlightChange) {
+                              onScheduleHighlightChange(opt.value);
+                            }
+                            onDownloadSchedulePDF(opt.value);
+                            setScheduleMenuOpen(false);
+                          }}
+                          disabled={downloadDisabled}
+                        >
+                          {opt.color && (
+                            <span
+                              className={styles.highlightDot}
+                              style={{ background: opt.color }}
+                            />
+                          )}
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
               {(onDownloadWorklog || onDownloadWorklogDocx) && (
                 <div
