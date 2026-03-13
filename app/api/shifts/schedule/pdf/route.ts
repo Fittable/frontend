@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
   const month = searchParams.get("month");
   const startDate = searchParams.get("start_date");
   const endDate = searchParams.get("end_date");
+  const highlight = searchParams.get("highlight");
 
   try {
     let url = `${BACKEND_URL}/api/shifts/schedule/pdf?`;
@@ -34,6 +35,10 @@ export async function GET(request: NextRequest) {
         { detail: "Either month or start_date+end_date required" },
         { status: 400 }
       );
+    }
+
+    if (highlight && ["all", "102", "103", "none"].includes(highlight)) {
+      params.append("highlight", highlight);
     }
     
     url += params.toString();
