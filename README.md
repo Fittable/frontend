@@ -14,9 +14,35 @@ Scheduling dashboard for university student office assistants. Syncs work shifts
 
 <br/>
 
+▶ Click to watch demo
+
 [![Fittable Demo](https://img.youtube.com/vi/Se2Nv5h_u2k/maxresdefault.jpg)](https://www.youtube.com/watch?v=Se2Nv5h_u2k)
 
 </div>
+
+---
+
+## Screenshots
+
+| University Portal Login | My Shift Schedule |
+|---|---|
+| ![Login](.github/assets/01_login.png) | ![My Schedule](.github/assets/02_my_schedule.png) |
+
+| Team Schedule Dashboard | Timetable Sync · Week View |
+|---|---|
+| ![All Schedules](.github/assets/03_all_schedules.png) | ![Weekly Sync](.github/assets/09_weekly_sync.png) |
+
+| Multi-day Shift Creation | Dark Mode |
+|---|---|
+| ![Multi-day](.github/assets/07_multi_day.png) | ![Dark Mode](.github/assets/10_dark_mode.png) |
+
+| Work Schedule Export | Work Log Document Generation |
+|---|---|
+| ![Download Schedule](.github/assets/04_download_schedule.png) | ![Download Worklog](.github/assets/05_download_worklog.png) |
+
+| Student Profile Card |
+|---|
+| ![Profile](.github/assets/06_my_profile.png) |
 
 ---
 
