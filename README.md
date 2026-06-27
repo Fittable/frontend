@@ -1,6 +1,6 @@
 <div align="center">
 
-# Fittable | Frontend
+# Fittable
 
 Scheduling dashboard for university student office assistants. Syncs work shifts and university timetables into a single calendar, streamlines schedule creation, and automates work document generation to replace manual spreadsheet workflows.
 
