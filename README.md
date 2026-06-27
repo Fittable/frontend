@@ -24,25 +24,32 @@ Scheduling dashboard for university student office assistants. Syncs work shifts
 
 ## Screenshots
 
-| University Portal Login | My Shift Schedule |
-|---|---|
-| ![Login](.github/assets/01_login.png) | ![My Schedule](.github/assets/02_my_schedule.png) |
+**University Portal Login**
+![Login](.github/assets/01_login.png)
 
-| Team Schedule Dashboard | Timetable Sync · Week View |
-|---|---|
-| ![All Schedules](.github/assets/03_all_schedules.png) | ![Weekly Sync](.github/assets/09_weekly_sync.png) |
+**My Shift Schedule**
+![My Schedule](.github/assets/02_my_schedule.png)
 
-| Multi-day Shift Creation | Dark Mode |
-|---|---|
-| ![Multi-day](.github/assets/07_multi_day.png) | ![Dark Mode](.github/assets/10_dark_mode.png) |
+**Team Schedule Dashboard**
+![All Schedules](.github/assets/03_all_schedules.png)
 
-| Work Schedule Export | Work Log Document Generation |
-|---|---|
-| ![Download Schedule](.github/assets/04_download_schedule.png) | ![Download Worklog](.github/assets/05_download_worklog.png) |
+**Timetable Sync · Week View**
+![Weekly Sync](.github/assets/09_weekly_sync.png)
 
-| Student Profile Card |
-|---|
-| ![Profile](.github/assets/06_my_profile.png) |
+**Multi-day Shift Creation**
+![Multi-day](.github/assets/07_multi_day.png)
+
+**Dark Mode**
+![Dark Mode](.github/assets/10_dark_mode.png)
+
+**Work Schedule Export**
+![Download Schedule](.github/assets/04_download_schedule.png)
+
+**Work Log Document Generation**
+![Download Worklog](.github/assets/05_download_worklog.png)
+
+**Student Profile Card**
+![Profile](.github/assets/06_my_profile.png)
 
 ---
 
