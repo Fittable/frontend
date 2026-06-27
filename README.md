@@ -25,38 +25,47 @@ Scheduling dashboard for university student office assistants. Syncs work shifts
 ## Screenshots
 
 **University Portal Login**
+
 Signs in using the same RSA-encrypted login flow as the university browser portal. No separate account needed.
 ![Login](.github/assets/01_login.png)
 
 **My Shift Schedule**
+
 Personal view of the logged-in student's own shifts with total hours for the current pay period.
 ![My Schedule](.github/assets/02_my_schedule.png)
 
 **All Part-time Workers Schedule**
+
 Everyone can see each other's shifts so no more than 3 workers end up scheduled on the same day.
 ![All Schedules](.github/assets/03_all_schedules.png)
 
 **Timetable Sync · Week View**
+
 Class blocks and work shifts on the same timeline so scheduling conflicts are caught before they happen.
 ![Weekly Sync](.github/assets/09_weekly_sync.png)
 
 **Multi-day Shift Creation**
+
 Ctrl-click multiple dates to create shifts across all of them at once.
 ![Multi-day](.github/assets/07_multi_day.png)
 
 **Dark Mode**
+
 Full dark theme across all views, toggled without a page reload.
 ![Dark Mode](.github/assets/10_dark_mode.png)
 
 **Work Schedule Export**
+
 Exports the month's schedule as a formatted PDF ready to submit.
 ![Download Schedule](.github/assets/04_download_schedule.png)
 
 **Work Log Document Generation**
+
 Auto-generates the official work log form as a PDF with personal details and work hours pre-filled, replacing what was previously done by hand.
 ![Download Worklog](.github/assets/05_download_worklog.png)
 
 **Student Profile Card**
+
 Profile synced with the university portal and displayed as a digital student ID card.
 ![Profile](.github/assets/06_my_profile.png)
 
