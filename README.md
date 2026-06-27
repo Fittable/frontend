@@ -74,6 +74,7 @@ Profile synced with the university portal and displayed as a digital student ID 
 ## System Architecture
 
 ```mermaid
+%%{init: {'themeVariables': {'fontSize': '11px'}}}%%
 graph TB
     subgraph browser["Browser"]
         UI["React Components\n30 custom components"]
@@ -118,6 +119,7 @@ graph TB
 All auth state lives in httpOnly cookies — the browser never touches the token directly. Next.js middleware enforces protection at the edge before any component renders.
 
 ```mermaid
+%%{init: {'themeVariables': {'fontSize': '11px'}}}%%
 sequenceDiagram
     autonumber
     participant B as Browser
@@ -148,6 +150,7 @@ sequenceDiagram
 ## Component Architecture
 
 ```mermaid
+%%{init: {'themeVariables': {'fontSize': '11px'}}}%%
 graph TD
     subgraph layout["Root Layout (layout.tsx)"]
         TP["ThemeProvider\nContext · localStorage"]
